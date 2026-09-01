@@ -21,6 +21,7 @@ import verticalMenuItemStyles from '@core/styles/vertical/menuItemStyles'
 import verticalMenuSectionStyles from '@core/styles/vertical/menuSectionStyles'
 
 import horizontalMenuData from '@/data/navigation/horizontalMenuData'
+import { filterMenuByEnabledModules } from '@libs/modules/filterMenu'
 
 type RenderExpandIconProps = {
   level?: number
@@ -46,8 +47,9 @@ const RenderVerticalExpandIcon = ({ open, transitionDuration }: RenderVerticalEx
 const HorizontalMenu = () => {
   const verticalNavOptions = useVerticalNav()
   const theme = useTheme()
-  const { user } = useTenant()
+  const { user, tenant } = useTenant()
   const { transitionDuration } = verticalNavOptions
+  const menuData = filterMenuByEnabledModules(horizontalMenuData(), tenant?.enabledModules)
 
   return (
     <HorizontalNav
@@ -76,7 +78,7 @@ const HorizontalMenu = () => {
           menuSectionStyles: verticalMenuSectionStyles(verticalNavOptions, theme)
         }}
       >
-        <GenerateHorizontalMenu menuData={horizontalMenuData()} />
+        <GenerateHorizontalMenu menuData={menuData} />
         {user.isPlatformAdmin && (
           <MenuItem href='/platform' icon={<i className='tabler-shield-cog' />}>
             Platform admin

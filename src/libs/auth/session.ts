@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 
 import { adminAuth, adminDb } from '@libs/firebase/admin'
 import { isPlatformAdmin } from '@libs/platform/admin'
+import { getTenantEnabledModules } from '@libs/modules/tenantModules'
 import type { ActiveTenantInfo, MemberRole, SessionUser, TenantStatus } from '@libs/firebase/types'
 
 export const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || '__session'
@@ -84,6 +85,7 @@ export async function getActiveTenant(user: SessionUser): Promise<ActiveTenantIn
 
   const tenant = tenantSnap.data()!
   const member = memberSnap.data()!
+  const enabledModules = await getTenantEnabledModules(tenantSnap.id)
 
   return {
     id: tenantSnap.id,
@@ -93,7 +95,8 @@ export async function getActiveTenant(user: SessionUser): Promise<ActiveTenantIn
     role: member.role as MemberRole,
     subscriptionStatus: tenant.subscription?.status,
     planId: tenant.subscription?.planId,
-    seats: tenant.subscription?.seats
+    seats: tenant.subscription?.seats,
+    enabledModules
   }
 
 }
@@ -110,6 +113,7 @@ export async function listUserTenants(uid: string): Promise<ActiveTenantInfo[]> 
     if (!tenantSnap.exists) continue
 
     const tenant = tenantSnap.data()!
+    const enabledModules = await getTenantEnabledModules(tenantId)
 
     results.push({
       id: tenantSnap.id,
@@ -119,7 +123,8 @@ export async function listUserTenants(uid: string): Promise<ActiveTenantInfo[]> 
       role: (membership.role || 'member') as MemberRole,
       subscriptionStatus: tenant.subscription?.status,
       planId: tenant.subscription?.planId,
-      seats: tenant.subscription?.seats
+      seats: tenant.subscription?.seats,
+      enabledModules
     })
   }
 

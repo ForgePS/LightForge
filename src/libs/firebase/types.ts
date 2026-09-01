@@ -89,6 +89,7 @@ export type ActiveTenantInfo = {
   subscriptionStatus?: SubscriptionStatus
   planId?: SubscriptionPlanId
   seats?: number
+  enabledModules?: string[]
 }
 
 export type PlatformTenantSummary = {

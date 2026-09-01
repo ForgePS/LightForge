@@ -26,6 +26,7 @@ import menuSectionStyles from '@core/styles/vertical/menuSectionStyles'
 
 // Data
 import verticalMenuData from '@/data/navigation/verticalMenuData'
+import { filterMenuByEnabledModules } from '@libs/modules/filterMenu'
 
 type RenderExpandIconProps = {
   open?: boolean
@@ -45,9 +46,10 @@ const RenderExpandIcon = ({ open, transitionDuration }: RenderExpandIconProps) =
 const VerticalMenu = ({ scrollMenu }: Props) => {
   const theme = useTheme()
   const verticalNavOptions = useVerticalNav()
-  const { user } = useTenant()
+  const { user, tenant } = useTenant()
   const { isBreakpointReached, transitionDuration } = verticalNavOptions
   const ScrollWrapper = isBreakpointReached ? 'div' : PerfectScrollbar
+  const menuData = filterMenuByEnabledModules(verticalMenuData(), tenant?.enabledModules)
 
   return (
     <ScrollWrapper
@@ -68,7 +70,7 @@ const VerticalMenu = ({ scrollMenu }: Props) => {
         renderExpandedMenuItemIcon={{ icon: <i className='tabler-circle text-xs' /> }}
         menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
       >
-        <GenerateVerticalMenu menuData={verticalMenuData()} />
+        <GenerateVerticalMenu menuData={menuData} />
         {user.isPlatformAdmin && (
           <MenuItem href='/platform' icon={<i className='tabler-shield-cog' />}>
             Platform admin

@@ -20,6 +20,7 @@ import TableCell from '@mui/material/TableCell'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 
+import TenantModulesPanel from '@components/platform/TenantModulesPanel'
 import TenantSettingsPanel from '@components/platform/TenantSettingsPanel'
 import TenantUsagePanel from '@components/platform/TenantUsagePanel'
 import CustomTextField from '@core/components/mui/TextField'
@@ -114,6 +115,7 @@ export default function TenantAdminDetail({ tenant }: { tenant: TenantDetail }) 
           <Tab label='Workspace' icon={<i className='tabler-building' />} iconPosition='start' />
           <Tab label='Subscription' icon={<i className='tabler-credit-card' />} iconPosition='start' />
           <Tab label='Members' icon={<i className='tabler-users' />} iconPosition='start' />
+          <Tab label='Modules' icon={<i className='tabler-toggle-left' />} iconPosition='start' />
           <Tab label='Usage' icon={<i className='tabler-chart-bar' />} iconPosition='start' />
           <Tab label='Settings' icon={<i className='tabler-settings' />} iconPosition='start' />
         </Tabs>
@@ -484,9 +486,11 @@ export default function TenantAdminDetail({ tenant }: { tenant: TenantDetail }) 
               </Button>
             </Stack>
           )}
-          {tab === 3 && <TenantUsagePanel tenantId={tenant.id} />}
+          {tab === 3 && <TenantModulesPanel tenantId={tenant.id} />}
 
-          {tab === 4 && <TenantSettingsPanel tenantId={tenant.id} />}
+          {tab === 4 && <TenantUsagePanel tenantId={tenant.id} />}
+
+          {tab === 5 && <TenantSettingsPanel tenantId={tenant.id} />}
         </CardContent>
       </Card>
     </Stack>

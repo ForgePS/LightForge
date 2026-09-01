@@ -2,7 +2,9 @@ import { FieldValue, type DocumentData } from 'firebase-admin/firestore'
 
 import { adminDb } from '@libs/firebase/admin'
 import { getSessionUser } from '@libs/auth/session'
-import { isValidCollection } from '@libs/modules/registry'
+import { getModule, isValidCollection } from '@libs/modules/registry'
+import { isModuleEnabledForTenant } from '@libs/modules/moduleAccess'
+import { getTenantEnabledModules } from '@libs/modules/tenantModules'
 
 function serializeDoc(id: string, data: DocumentData) {
   const out: Record<string, unknown> = { id }
@@ -56,6 +58,17 @@ export async function requireActiveTenantContext() {
 export async function listRecords(tenantId: string, collection: string) {
   if (!isValidCollection(collection)) {
     throw Object.assign(new Error('Unknown collection'), { status: 400 })
+  }
+
+  const user = await getSessionUser()
+
+  if (user && !user.isPlatformAdmin) {
+    const enabled = await getTenantEnabledModules(tenantId)
+    const module = getModule(collection)
+
+    if (module && !isModuleEnabledForTenant(enabled, module.key)) {
+      throw Object.assign(new Error('Module not enabled for this tenant'), { status: 403 })
+    }
   }
 
   const snap = await adminDb.collection('tenants').doc(tenantId).collection(collection).limit(500).get()
