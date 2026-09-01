@@ -64,6 +64,10 @@ env:
     value: '14'
     availability:
       - RUNTIME
+  - variable: PNPM_CONFIG_MINIMUM_RELEASE_AGE
+    value: '0'
+    availability:
+      - BUILD
   # Optional Stripe — create secrets then uncomment:
   # firebase apphosting:secrets:set STRIPE_SECRET_KEY --project lightforge-2cf3b
   # firebase apphosting:secrets:grantaccess STRIPE_SECRET_KEY --backend lightforge-app --project lightforge-2cf3b

@@ -38,8 +38,6 @@ App login target: `https://app.lightforgecrm.com`
 | `/solutions/event-lighting` | Event lighting |
 | `/solutions/permanent-lighting` | Permanent lighting |
 
-Content source: `apps/marketing/data/solutions.ts`  
-Layout: `apps/marketing/components/SolutionPageLayout.vue`
-
-Content source: `apps/marketing/data/product-pages.ts`  
-Layout: `apps/marketing/components/ProductPageLayout.vue`
+Content sources:
+- Solutions: `apps/marketing/data/solutions.ts` + `SolutionPageLayout.vue`
+- Product pages: `apps/marketing/data/product-pages.ts` + `ProductPageLayout.vue`
