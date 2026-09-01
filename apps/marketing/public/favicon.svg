@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="LightForge">
+  <rect width="64" height="64" rx="14" fill="#10243A"/>
+  <g transform="translate(8,6)">
+    <path d="M24 4 L40 28 L32 28 L44 48 L4 48 L16 28 L8 28 Z" fill="#1F5A32"/>
+    <path d="M24 10 L34 26 L28 26 L36 42 L12 42 L20 26 L14 26 Z" fill="#6FAF2D"/>
+    <path d="M24 0 L25.8 5.2 L31.2 5.2 L26.8 8.4 L28.4 13.6 L24 10.2 L19.6 13.6 L21.2 8.4 L16.8 5.2 L22.2 5.2 Z" fill="#D99A16"/>
+  </g>
+</svg>

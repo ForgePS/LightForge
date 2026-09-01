@@ -1,0 +1,86 @@
+/* Framework-agnostic LightForge UI utility classes */
+.lf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--lf-radius-md, 12px);
+  font-family: var(--lf-font-sans);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1.2;
+  padding: 0.75rem 1.25rem;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.lf-btn:focus-visible {
+  outline: 2px solid var(--lf-green, #6faf2d);
+  outline-offset: 2px;
+}
+
+.lf-btn--primary {
+  background: var(--lf-primary-forest, #1f5a32);
+  color: var(--lf-white, #fff);
+  box-shadow: var(--lf-shadow-sm);
+}
+
+.lf-btn--primary:hover {
+  background: #174826;
+}
+
+.lf-btn--gold {
+  background: var(--lf-gold, #d99a16);
+  color: var(--lf-navy, #10243a);
+  box-shadow: var(--lf-shadow-sm);
+}
+
+.lf-btn--gold:hover {
+  background: #c48a12;
+}
+
+.lf-btn--outline {
+  background: transparent;
+  border-color: rgb(16 36 58 / 0.16);
+  color: var(--lf-navy, #10243a);
+}
+
+.lf-btn--ghost {
+  background: transparent;
+  color: var(--lf-navy, #10243a);
+}
+
+.lf-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lf-badge--green {
+  background: rgb(111 175 45 / 0.14);
+  color: var(--lf-primary-forest, #1f5a32);
+}
+
+.lf-badge--gold {
+  background: rgb(217 154 22 / 0.16);
+  color: #8a620e;
+}
+
+.lf-badge--navy {
+  background: rgb(16 36 58 / 0.1);
+  color: var(--lf-navy, #10243a);
+}
+
+.lf-card {
+  background: var(--lf-white, #fff);
+  border: 1px solid rgb(16 36 58 / 0.08);
+  border-radius: var(--lf-radius-lg, 16px);
+  box-shadow: var(--lf-shadow-sm);
+}

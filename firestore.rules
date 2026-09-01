@@ -1,0 +1,90 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isPlatformAdmin() {
+      return signedIn()
+        && (
+          request.auth.token.platformAdmin == true
+          || exists(/databases/$(database)/documents/platformAdmins/$(request.auth.uid))
+        );
+    }
+
+    function isMember(tenantId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid));
+    }
+
+    function memberRole(tenantId) {
+      return get(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid)).data.role;
+    }
+
+    function isOwnerOrAdmin(tenantId) {
+      return isMember(tenantId)
+        && memberRole(tenantId) in ['owner', 'admin'];
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isPlatformAdmin());
+      allow create: if signedIn() && request.auth.uid == userId;
+      allow update: if signedIn() && request.auth.uid == userId
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['createdAt', 'isPlatformAdmin']));
+      allow delete: if false;
+
+      match /tenantMemberships/{tenantId} {
+        allow read: if signedIn() && (request.auth.uid == userId || isPlatformAdmin());
+        allow write: if false;
+      }
+    }
+
+    match /platformAdmins/{adminId} {
+      allow read: if isPlatformAdmin();
+      allow write: if false;
+    }
+
+    match /subscriptionPlans/{planId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /tenantTemplates/{templateId} {
+      allow read, write: if false;
+    }
+
+    match /tenants/{tenantId} {
+      allow read: if isMember(tenantId) || isPlatformAdmin();
+      allow create: if false;
+      allow update: if isPlatformAdmin()
+        || (
+          isOwnerOrAdmin(tenantId)
+          && (!request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['isTemplate', 'createdFromTemplateId', 'createdAt', 'subscription']))
+        );
+      allow delete: if false;
+
+      match /members/{memberId} {
+        allow read: if isMember(tenantId) || isPlatformAdmin();
+        allow write: if false;
+      }
+
+      match /settings/{docId} {
+        allow read: if isMember(tenantId) || isPlatformAdmin();
+        allow write: if isOwnerOrAdmin(tenantId) || isPlatformAdmin();
+      }
+
+      match /{collection}/{docId} {
+        allow read: if isMember(tenantId) || isPlatformAdmin();
+        allow write: if isMember(tenantId) || isPlatformAdmin();
+      }
+
+      match /{document=**} {
+        allow read: if isMember(tenantId) || isPlatformAdmin();
+        allow write: if isMember(tenantId) || isPlatformAdmin();
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "firestore": {
+    "database": "lightforge",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "apphosting": [
+    {
+      "backendId": "lightforge-app",
+      "rootDir": "/",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "apps",
+        "packages",
+        "docs",
+        "**/*.md"
+      ]
+    }
+  ]
+}

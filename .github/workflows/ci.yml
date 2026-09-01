@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+
+      - name: Build app
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          NEXT_PUBLIC_FIREBASE_API_KEY: AIzaSyBWRVsS6MS9kzhBoVNqBJlDWuoQkl0C6qA
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: lightforge-2cf3b.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: lightforge-2cf3b
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: lightforge-2cf3b.firebasestorage.app
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: '1012853146594'
+          NEXT_PUBLIC_FIREBASE_APP_ID: 1:1012853146594:web:5a3336b0022eda8cb1afbb
+          NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: G-Q5B7R9M3TV
+          NEXT_PUBLIC_FIRESTORE_DATABASE_ID: lightforge
