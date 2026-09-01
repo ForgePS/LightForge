@@ -103,3 +103,63 @@ export type PlatformTenantSummary = {
   createdAt: string | null
   updatedAt: string | null
 }
+
+export type PlatformUserSummary = {
+  uid: string
+  email: string
+  displayName: string
+  activeTenantId: string | null
+  isPlatformAdmin: boolean
+  membershipCount: number
+  createdAt: string | null
+}
+
+export type PlatformAdminRecord = {
+  uid: string
+  email: string
+  createdAt: string | null
+}
+
+export type TenantTemplateSummary = {
+  id: string
+  name: string
+  sourceTenantId: string
+  sourceTenantName: string | null
+  createdAt: string | null
+}
+
+export type PlatformSettings = {
+  supportEmail: string
+  maintenanceMode: boolean
+  defaultTrialDays: number
+  allowSelfServeSignup: boolean
+  platformName: string
+}
+
+export type TenantModuleCount = {
+  collection: string
+  title: string
+  count: number
+}
+
+export type BillingOverview = {
+  byStatus: Record<string, number>
+  pastDueTenants: PlatformTenantSummary[]
+  trialingTenants: PlatformTenantSummary[]
+  stripeConnectedCount: number
+  totalMrrCents: number
+}
+
+export type PlatformAnalytics = {
+  moduleTotals: TenantModuleCount[]
+  totalRecords: number
+  aggregateUsage: {
+    openJobs: number
+    pipelineCents: number
+    unpaidCents: number
+    openIssues: number
+  }
+  tenantGrowth: Array<{ month: string; count: number }>
+  topTenantsByMembers: Array<{ id: string; name: string; memberCount: number }>
+  topTenantsByRecords: Array<{ id: string; name: string; recordCount: number }>
+}
