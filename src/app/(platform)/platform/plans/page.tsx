@@ -1,20 +1,22 @@
-import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
 
 import PlansAdmin from '@components/platform/PlansAdmin'
+import { PlatformPageHeader } from '@components/platform/platformUi'
 import { listSubscriptionPlans } from '@libs/platform/admin'
 
 export default async function PlatformPlansPage() {
   const plans = await listSubscriptionPlans()
 
   return (
-    <Stack spacing={3}>
-      <div>
-        <Typography variant='h4'>Plans & pricing</Typography>
-        <Typography color='text.secondary'>
-          Catalog used when assigning subscriptions. Stripe IDs can be stored per tenant until billing is wired.
-        </Typography>
-      </div>
+    <Stack spacing={4}>
+      <PlatformPageHeader
+        title='Plans & pricing'
+        subtitle='Define the catalog used when provisioning tenants and assigning subscriptions.'
+        breadcrumbs={[
+          { label: 'Platform', href: '/platform' },
+          { label: 'Plans & pricing' }
+        ]}
+      />
       <PlansAdmin initialPlans={plans} />
     </Stack>
   )

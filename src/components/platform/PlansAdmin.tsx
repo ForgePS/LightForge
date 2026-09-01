@@ -2,13 +2,19 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Alert from '@mui/material/Alert'
+import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
+import Chip from '@mui/material/Chip'
+import Divider from '@mui/material/Divider'
+import Grid from '@mui/material/Grid'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import ListItemIcon from '@mui/material/ListItemIcon'
+import ListItemText from '@mui/material/ListItemText'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import Button from '@mui/material/Button'
-import Alert from '@mui/material/Alert'
-import Grid from '@mui/material/Grid'
 
 import CustomTextField from '@core/components/mui/TextField'
 import type { SubscriptionPlan } from '@libs/firebase/types'
@@ -54,10 +60,22 @@ export default function PlansAdmin({ initialPlans }: { initialPlans: Subscriptio
       <Grid container spacing={3}>
         {plans.map((plan, index) => (
           <Grid key={plan.id} size={{ xs: 12, md: 6 }}>
-            <Card>
+            <Card className='h-full'>
               <CardContent>
                 <Stack spacing={2}>
-                  <Typography variant='h6'>{plan.id}</Typography>
+                  <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                    <Typography variant='h6'>{plan.name}</Typography>
+                    <Chip size='small' label={plan.id} variant='tonal' />
+                  </Stack>
+                  <Typography variant='body2' color='text.secondary'>
+                    {plan.description || 'No description yet.'}
+                  </Typography>
+                  <Stack direction='row' spacing={1}>
+                    <Chip size='small' label={`${formatUsd(plan.monthlyPriceCents)}/mo`} color='primary' variant='tonal' />
+                    <Chip size='small' label={`${formatUsd(plan.yearlyPriceCents)}/yr`} variant='outlined' />
+                    <Chip size='small' label={`${plan.includedSeats} seats`} variant='outlined' />
+                  </Stack>
+                  <Divider />
                   <CustomTextField
                     label='Name'
                     value={plan.name}
@@ -108,6 +126,21 @@ export default function PlansAdmin({ initialPlans }: { initialPlans: Subscriptio
                     minRows={4}
                     fullWidth
                   />
+                  {plan.features.length > 0 && (
+                    <>
+                      <Typography variant='subtitle2'>Feature preview</Typography>
+                      <List dense disablePadding>
+                        {plan.features.slice(0, 4).map(feature => (
+                          <ListItem key={feature} disableGutters>
+                            <ListItemIcon sx={{ minWidth: 28 }}>
+                              <i className='tabler-check text-success' />
+                            </ListItemIcon>
+                            <ListItemText primary={feature} />
+                          </ListItem>
+                        ))}
+                      </List>
+                    </>
+                  )}
                 </Stack>
               </CardContent>
             </Card>
