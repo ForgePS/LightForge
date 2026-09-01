@@ -72,13 +72,6 @@
     "typescript": "5.9.3",
     "unicorn-magic": "0.4.0"
   },
-  "resolutions": {
-    "rimraf": "5.0.7",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "eslint": "8.57.1",
-    "eslint-config-next": "15.1.2"
-  },
   "overrides": {
     "rimraf": "5.0.7",
     "react": "19.2.3",
