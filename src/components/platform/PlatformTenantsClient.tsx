@@ -22,12 +22,8 @@ import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 
 import CustomTextField from '@core/components/mui/TextField'
-import {
-  PlatformPageHeader,
-  PlatformStatusChip,
-  formatPlatformDate,
-  tenantInitials
-} from '@components/platform/platformUi'
+import { PlatformPageHeader, PlatformStatusChip } from '@components/platform/platformUi'
+import { formatPlatformDate, tenantInitials } from '@libs/platform/format'
 import type { PlatformTenantSummary } from '@libs/firebase/types'
 import { formatUsd, estimateMrrCents } from '@libs/subscriptions/plans'
 

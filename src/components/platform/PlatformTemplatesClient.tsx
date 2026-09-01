@@ -12,7 +12,8 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 
-import { PlatformPageHeader, formatPlatformDate } from '@components/platform/platformUi'
+import { PlatformPageHeader } from '@components/platform/platformUi'
+import { formatPlatformDate } from '@libs/platform/format'
 import type { TenantTemplateSummary } from '@libs/firebase/types'
 
 export default function PlatformTemplatesClient({ templates }: { templates: TenantTemplateSummary[] }) {

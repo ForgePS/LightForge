@@ -6,7 +6,8 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import type { ReactNode } from 'react'
 
-import { PlatformStatusChip, formatPlatformDate } from '@components/platform/platformUi'
+import { PlatformStatusChip } from '@components/platform/platformUi'
+import { formatPlatformDate } from '@libs/platform/format'
 import { formatUsd } from '@libs/subscriptions/plans'
 
 type TenantSummary = {

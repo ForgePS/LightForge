@@ -19,10 +19,9 @@ import {
   PlatformPageHeader,
   PlatformQuickAction,
   PlatformStatCard,
-  PlatformStatusChip,
-  formatPlatformDate,
-  tenantInitials
+  PlatformStatusChip
 } from '@components/platform/platformUi'
+import { formatPlatformDate, tenantInitials } from '@libs/platform/format'
 import { getPlatformStats, listPlatformTenants } from '@libs/platform/admin'
 import { formatUsd } from '@libs/subscriptions/plans'
 
