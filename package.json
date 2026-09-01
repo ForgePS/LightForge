@@ -18,6 +18,9 @@
     "clear": "rm -rf node_modules .next",
     "dev:marketing": "pnpm --filter @lightforge/marketing dev",
     "build:marketing": "pnpm --filter @lightforge/marketing build",
+    "build:marketing:static": "pnpm --filter @lightforge/marketing build:static",
+    "validate:marketing": "pnpm --filter @lightforge/marketing validate:routes",
+    "deploy:marketing": "pnpm --filter @lightforge/marketing deploy:static",
     "lint:marketing": "pnpm --filter @lightforge/marketing lint",
     "typecheck:marketing": "pnpm --filter @lightforge/marketing typecheck"
   },

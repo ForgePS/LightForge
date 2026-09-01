@@ -47,8 +47,12 @@ pnpm dev
 ## Build
 
 ```bash
-pnpm build:marketing
+pnpm build:marketing          # Node server + prerendered static pages
+pnpm build:marketing:static   # Static-only output for S3 + CloudFront
+pnpm validate:marketing       # Verify all routes prerendered
 ```
+
+See [`marketing-deployment.md`](marketing-deployment.md) for CI, AWS, and production deploy steps.
 
 ## Environment
 

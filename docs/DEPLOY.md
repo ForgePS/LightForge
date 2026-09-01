@@ -31,13 +31,25 @@ firebase apphosting:secrets:grantaccess STRIPE_SECRET_KEY --backend lightforge-a
 
 ## Roll out
 
-After GitHub is connected:
+**CLI deploy** (works without GitHub connected):
+
+```bash
+firebase deploy --only apphosting --project lightforge-2cf3b
+```
+
+After GitHub is connected, automatic rollouts on push to `main`:
 
 ```bash
 firebase apphosting:rollouts:create lightforge-app --git-branch main --project lightforge-2cf3b
 ```
 
-Or push to `main` if automatic rollouts are enabled.
+### pnpm / App Hosting notes
+
+Cloud Build uses **pnpm 11** with strict build-script approval. This repo configures:
+
+- `minimum-release-age=0` in `.npmrc` and `pnpm-workspace.yaml`
+- `allowBuilds` in `pnpm-workspace.yaml` for `sharp`, `esbuild`, etc.
+- `PNPM_CONFIG_FROZEN_LOCKFILE=false` in `apphosting.yaml` (pnpm 10 vs 11 lockfile differences)
 
 ## Local vs production Admin SDK
 

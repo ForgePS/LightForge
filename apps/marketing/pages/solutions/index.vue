@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { solutionsIndexCards, solutionsOverview } from '~/data/solutions'
 
-useSeoMeta({
+useMarketingSeo({
   title: solutionsOverview.seoTitle,
   description: solutionsOverview.description,
-  ogTitle: `${solutionsOverview.seoTitle} | LightForge`,
-  ogDescription: solutionsOverview.description
+  path: '/solutions'
 })
 </script>
 

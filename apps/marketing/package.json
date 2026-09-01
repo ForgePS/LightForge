@@ -6,8 +6,11 @@
   "scripts": {
     "dev": "nuxt dev --port 3001",
     "build": "nuxt build",
+    "build:static": "node scripts/build-static.mjs",
     "preview": "nuxt preview --port 3001",
     "typecheck": "nuxt typecheck",
+    "validate:routes": "node scripts/validate-routes.mjs",
+    "deploy:static": "node scripts/deploy-static.mjs",
     "lint": "echo \"Marketing lint: configure ESLint in a later sprint\" && exit 0",
     "postinstall": "nuxt prepare"
   },

@@ -1,7 +1,7 @@
+<script setup lang="ts">
+import { termsOfService } from '~/content/legal'
+</script>
+
 <template>
-  <MarketingPageShell
-    title="Terms of Service"
-    description="Terms of service architecture for LightForge. Legal text is maintained separately from product UI."
-    eyebrow="Legal"
-  />
+  <LegalDocumentView :document="termsOfService" />
 </template>

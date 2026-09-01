@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="LightForge  From Lead to Lights">
+  <rect width="1200" height="630" fill="#10243A"/>
+  <rect x="0" y="0" width="1200" height="630" fill="url(#g)" opacity="0.35"/>
+  <defs>
+    <radialGradient id="g" cx="80%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="#6FAF2D"/>
+      <stop offset="100%" stop-color="#10243A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g transform="translate(80,180)">
+    <path d="M60 20 L100 80 L84 80 L108 140 L12 140 L36 80 L20 80 Z" fill="#1F5A32"/>
+    <path d="M60 36 L88 80 L76 80 L96 124 L24 124 L48 80 L36 80 Z" fill="#6FAF2D"/>
+    <path d="M60 8 L64 24 L80 24 L68 32 L72 48 L60 40 L48 48 L52 32 L40 24 L56 24 Z" fill="#D99A16"/>
+  </g>
+  <text x="180" y="250" font-family="Public Sans, Segoe UI, Arial, sans-serif" font-size="72" font-weight="700">
+    <tspan fill="#FFFFFF">LIGHT</tspan><tspan fill="#D99A16">FORGE</tspan>
+  </text>
+  <text x="180" y="320" font-family="Public Sans, Segoe UI, Arial, sans-serif" font-size="28" font-weight="600" letter-spacing="0.16em" fill="#6FAF2D">FROM LEAD TO LIGHTS</text>
+  <text x="180" y="390" font-family="Public Sans, Segoe UI, Arial, sans-serif" font-size="30" fill="#FAFAF7">The operating platform for professional lighting companies.</text>
+</svg>

@@ -50,6 +50,22 @@ img {
   margin-inline: auto;
 }
 
+.lf-skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -100%;
+  z-index: 500;
+  padding: 0.65rem 0.9rem;
+  border-radius: 10px;
+  background: var(--lf-navy);
+  color: var(--lf-white);
+  font-weight: 600;
+}
+
+.lf-skip-link:focus {
+  top: 1rem;
+}
+
 .lf-container--wide {
   width: min(100% - 2rem, 1320px);
   margin-inline: auto;

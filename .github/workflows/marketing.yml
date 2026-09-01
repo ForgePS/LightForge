@@ -1,0 +1,104 @@
+name: Marketing
+
+on:
+  push:
+    branches: [main, feature/lightforge-marketing-site]
+    paths:
+      - 'apps/marketing/**'
+      - 'packages/branding/**'
+      - 'packages/ui/**'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/marketing.yml'
+  pull_request:
+    paths:
+      - 'apps/marketing/**'
+      - 'packages/branding/**'
+      - 'packages/ui/**'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/marketing.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: marketing-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck marketing
+        run: pnpm typecheck:marketing
+
+      - name: Build static marketing site
+        run: pnpm build:marketing:static
+        env:
+          NUXT_PUBLIC_SITE_URL: https://www.lightforgecrm.com
+          NUXT_PUBLIC_APP_URL: https://app.lightforgecrm.com
+          NUXT_PUBLIC_COOKIE_CONSENT_ENABLED: 'false'
+
+      - name: Validate prerendered routes
+        run: pnpm validate:marketing
+
+      - name: Upload static artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: marketing-static
+          path: apps/marketing/.output/public
+          if-no-files-found: error
+
+  deploy:
+    needs: quality
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: marketing-production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build static marketing site
+        run: pnpm build:marketing:static
+        env:
+          NUXT_PUBLIC_SITE_URL: https://www.lightforgecrm.com
+          NUXT_PUBLIC_APP_URL: https://app.lightforgecrm.com
+          NUXT_PUBLIC_COOKIE_CONSENT_ENABLED: 'false'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.MARKETING_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.MARKETING_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.MARKETING_AWS_REGION || 'us-east-1' }}
+
+      - name: Deploy to S3 and invalidate CloudFront
+        run: pnpm deploy:marketing
+        env:
+          MARKETING_S3_BUCKET: ${{ vars.MARKETING_S3_BUCKET }}
+          MARKETING_CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.MARKETING_CLOUDFRONT_DISTRIBUTION_ID }}

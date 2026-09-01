@@ -1,15 +1,23 @@
 <script setup lang="ts">
 import type { SolutionPageContent } from '~/data/solutions'
+import { buildBreadcrumbSchema } from '~/composables/useMarketingSeo'
 
 const props = defineProps<{
   content: SolutionPageContent
 }>()
 
-useSeoMeta({
+const config = useRuntimeConfig()
+const siteUrl = (config.public.siteUrl as string).replace(/\/+$/, '')
+
+useMarketingSeo({
   title: props.content.seoTitle,
   description: props.content.description,
-  ogTitle: `${props.content.seoTitle} | LightForge`,
-  ogDescription: props.content.description
+  path: props.content.path,
+  jsonLd: buildBreadcrumbSchema(siteUrl, [
+    { name: 'Home', path: '/' },
+    { name: 'Solutions', path: '/solutions' },
+    { name: props.content.eyebrow, path: props.content.path }
+  ])
 })
 </script>
 

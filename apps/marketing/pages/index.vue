@@ -1,11 +1,14 @@
 <script setup lang="ts">
-useSeoMeta({
+import { homepageFaq } from '~/data/faq'
+import { buildFaqSchema } from '~/composables/useMarketingSeo'
+
+useMarketingSeo({
   title: 'Software for Professional Lighting Companies',
   description:
     'LightForge gives professional holiday and event lighting companies one platform to manage leads, estimates, customers, scheduling, crews, inventory, installations, service, removals, payments, and renewals.',
   ogTitle: 'LightForge | From Lead to Lights',
-  ogDescription:
-    'The operating platform for professional lighting companies — from lead to lights.'
+  path: '/',
+  jsonLd: buildFaqSchema(homepageFaq)
 })
 </script>
 
@@ -81,6 +84,15 @@ useSeoMeta({
         to="/takedowns"
       />
     </div>
+  </SectionContainer>
+
+  <SectionContainer surface>
+    <SectionHeading
+      eyebrow="FAQ"
+      title="Questions about LightForge"
+      description="Answers for professional lighting companies evaluating an operating platform — not a generic CRM."
+    />
+    <FAQAccordion :items="homepageFaq" />
   </SectionContainer>
 
   <CTASection />

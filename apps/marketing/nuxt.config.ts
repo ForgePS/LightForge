@@ -1,8 +1,15 @@
 import { fileURLToPath } from 'node:url'
 import { defineNuxtConfig } from 'nuxt/config'
+import { marketingRoutes } from './data/routes'
 
 const appUrl = process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3001'
 const platformUrl = process.env.NUXT_PUBLIC_APP_URL || 'https://app.lightforgecrm.com'
+const nitroPreset = process.env.NITRO_PRESET || 'node-server'
+const prerenderRoutes = [
+  ...marketingRoutes.map(route => route.path),
+  '/sitemap.xml',
+  '/robots.txt'
+]
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
@@ -61,7 +68,8 @@ export default defineNuxtConfig({
       siteUrl: appUrl,
       appUrl: platformUrl,
       brandName: 'LightForge',
-      tagline: 'From Lead to Lights'
+      tagline: 'From Lead to Lights',
+      cookieConsentEnabled: process.env.NUXT_PUBLIC_COOKIE_CONSENT_ENABLED === 'true'
     }
   },
   app: {
@@ -81,6 +89,8 @@ export default defineNuxtConfig({
       ],
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {
           rel: 'stylesheet',
           href: 'https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap'
@@ -97,9 +107,10 @@ export default defineNuxtConfig({
     typeCheck: false
   },
   nitro: {
+    preset: nitroPreset,
     prerender: {
       crawlLinks: false,
-      routes: ['/']
+      routes: prerenderRoutes
     }
   }
 })

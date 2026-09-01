@@ -1,7 +1,8 @@
 <script setup lang="ts">
-useSeoMeta({
+useMarketingSeo({
   title: 'Page not found',
-  description: 'The page you requested could not be found.'
+  description: 'The page you requested could not be found.',
+  noindex: true
 })
 </script>
 

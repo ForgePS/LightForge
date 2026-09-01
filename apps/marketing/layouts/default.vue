@@ -1,10 +1,12 @@
 <template>
   <v-app class="lf-app">
+    <a href="#main-content" class="lf-skip-link">Skip to main content</a>
     <LightForgeNavbar />
-    <v-main>
+    <v-main id="main-content" tabindex="-1">
       <slot />
     </v-main>
     <LightForgeFooter />
+    <CookieConsent />
   </v-app>
 </template>
 

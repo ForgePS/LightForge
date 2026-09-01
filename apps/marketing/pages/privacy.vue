@@ -1,7 +1,7 @@
+<script setup lang="ts">
+import { privacyPolicy } from '~/content/legal'
+</script>
+
 <template>
-  <MarketingPageShell
-    title="Privacy Policy"
-    description="Privacy policy architecture for LightForge. Legal text is maintained separately from product UI."
-    eyebrow="Legal"
-  />
+  <LegalDocumentView :document="privacyPolicy" />
 </template>

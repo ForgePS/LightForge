@@ -3,13 +3,13 @@ const props = defineProps<{
   title: string
   description: string
   eyebrow?: string
+  path?: string
 }>()
 
-useSeoMeta({
+useMarketingSeo({
   title: props.title,
   description: props.description,
-  ogTitle: `${props.title} | LightForge`,
-  ogDescription: props.description
+  path: props.path
 })
 </script>
 
