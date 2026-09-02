@@ -8,7 +8,7 @@ const databaseId = process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID || 'lightforge'
 const storageBucket =
   process.env.FIREBASE_STORAGE_BUCKET ||
   process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
-  `${projectId}.firebasestorage.app`
+  `${projectId}-branding`
 
 export function getStorageBucketName() {
   return storageBucket
