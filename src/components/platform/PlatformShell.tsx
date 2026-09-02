@@ -25,6 +25,7 @@ import type { BrandingSettings } from '@libs/branding/types'
 import type { SessionUser } from '@libs/firebase/types'
 
 const drawerWidth = 280
+const headerHeight = 64
 
 const navSections = [
   {
@@ -82,26 +83,65 @@ export default function PlatformShell({
         position='fixed'
         color='inherit'
         elevation={0}
-        sx={{ borderBottom: 1, borderColor: 'divider', zIndex: theme => theme.zIndex.drawer + 1 }}
+        sx={{
+          width: '100%',
+          left: 0,
+          right: 0,
+          height: headerHeight,
+          borderBottom: 1,
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          zIndex: theme => theme.zIndex.drawer + 1
+        }}
       >
-        <Toolbar className='gap-3'>
-          <Link href='/platform' className='flex items-center gap-2 no-underline text-inherit min-is-0'>
-            <BrandedLogoMark branding={branding} />
-            <Box className='hidden md:block min-is-0'>
-              <Typography variant='h6' noWrap>
+        <Toolbar
+          disableGutters
+          sx={{
+            height: headerHeight,
+            minHeight: `${headerHeight}px !important`,
+            maxHeight: headerHeight,
+            px: 2,
+            gap: 1.5,
+            overflow: 'hidden'
+          }}
+        >
+          <Link
+            href='/platform'
+            className='no-underline text-inherit'
+            style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flexShrink: 1 }}
+          >
+            <BrandedLogoMark branding={branding} height={28} />
+            <Box sx={{ display: { xs: 'none', sm: 'block' }, minWidth: 0, lineHeight: 1.15 }}>
+              <Typography variant='subtitle1' fontWeight={700} noWrap>
                 {platformName}
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography variant='caption' color='text.secondary' noWrap display='block'>
                 Admin control center
               </Typography>
             </Box>
           </Link>
+
           <Box sx={{ flexGrow: 1 }} />
-          <Chip size='small' label='Platform admin' color='primary' variant='tonal' className='hidden sm:flex' />
-          <Button href='/dashboard' size='small' variant='outlined' startIcon={<i className='tabler-external-link' />}>
+
+          <Chip
+            size='small'
+            label='Platform admin'
+            color='primary'
+            variant='tonal'
+            sx={{ display: { xs: 'none', md: 'flex' }, flexShrink: 0 }}
+          />
+          <Button
+            href='/dashboard'
+            size='small'
+            variant='outlined'
+            startIcon={<i className='tabler-external-link' />}
+            sx={{ flexShrink: 0, display: { xs: 'none', sm: 'inline-flex' } }}
+          >
             Tenant app
           </Button>
-          <PlatformUserMenu user={user} />
+          <Box sx={{ flexShrink: 0 }}>
+            <PlatformUserMenu user={user} />
+          </Box>
         </Toolbar>
       </AppBar>
 
@@ -113,53 +153,73 @@ export default function PlatformShell({
           [`& .MuiDrawer-paper`]: {
             width: drawerWidth,
             boxSizing: 'border-box',
-            mt: 9,
+            top: headerHeight,
+            height: `calc(100% - ${headerHeight}px)`,
             borderRight: 1,
             borderColor: 'divider',
             bgcolor: theme => alpha(theme.palette.primary.main, 0.02)
           }
         }}
       >
-        {navSections.map(section => (
-          <List key={section.title} subheader={<ListSubheader>{section.title}</ListSubheader>}>
-            {section.items.map(item => (
-              <ListItemButton
-                key={item.href}
-                component={Link}
-                href={item.href}
-                selected={isSelected(item.href, 'exact' in item ? item.exact : false)}
-                sx={{ mx: 2, mb: 0.5, borderRadius: 1 }}
-              >
-                <ListItemIcon sx={{ minWidth: 38 }}>
-                  <i className={item.icon} />
-                </ListItemIcon>
-                <ListItemText primary={item.label} />
-              </ListItemButton>
-            ))}
-          </List>
-        ))}
-        <Divider sx={{ mt: 2 }} />
-        <Box sx={{ p: 3 }}>
-          <Typography variant='caption' color='text.secondary' display='block'>
-            Quick links
-          </Typography>
-          <Stack spacing={0.5} sx={{ mt: 1 }}>
-            <Link href='/platform/billing' className='no-underline'>
-              <Typography variant='body2' color='primary.main'>
-                Billing overview
-              </Typography>
-            </Link>
-            <Link href='/platform/analytics' className='no-underline'>
-              <Typography variant='body2' color='primary.main'>
-                Platform analytics
-              </Typography>
-            </Link>
-          </Stack>
+        <Box sx={{ overflowY: 'auto', height: '100%', pb: 3 }}>
+          {navSections.map(section => (
+            <List
+              key={section.title}
+              dense
+              subheader={
+                <ListSubheader sx={{ bgcolor: 'transparent', lineHeight: '36px', pt: 1 }}>
+                  {section.title}
+                </ListSubheader>
+              }
+            >
+              {section.items.map(item => (
+                <ListItemButton
+                  key={item.href}
+                  component={Link}
+                  href={item.href}
+                  selected={isSelected(item.href, 'exact' in item ? item.exact : false)}
+                  sx={{ mx: 1.5, mb: 0.5, borderRadius: 1 }}
+                >
+                  <ListItemIcon sx={{ minWidth: 36 }}>
+                    <i className={item.icon} />
+                  </ListItemIcon>
+                  <ListItemText primary={item.label} primaryTypographyProps={{ variant: 'body2' }} />
+                </ListItemButton>
+              ))}
+            </List>
+          ))}
+          <Divider sx={{ my: 2, mx: 2 }} />
+          <Box sx={{ px: 3 }}>
+            <Typography variant='caption' color='text.secondary' display='block'>
+              Quick links
+            </Typography>
+            <Stack spacing={0.5} sx={{ mt: 1 }}>
+              <Link href='/platform/billing' className='no-underline'>
+                <Typography variant='body2' color='primary.main'>
+                  Billing overview
+                </Typography>
+              </Link>
+              <Link href='/platform/analytics' className='no-underline'>
+                <Typography variant='body2' color='primary.main'>
+                  Platform analytics
+                </Typography>
+              </Link>
+            </Stack>
+          </Box>
         </Box>
       </Drawer>
 
-      <Box component='main' sx={{ flexGrow: 1, p: { xs: 3, md: 5 }, mt: 9, maxWidth: '100%' }}>
-        {children}
+      <Box
+        component='main'
+        sx={{
+          flexGrow: 1,
+          width: `calc(100% - ${drawerWidth}px)`,
+          minWidth: 0,
+          pt: `${headerHeight}px`,
+          bgcolor: 'background.default'
+        }}
+      >
+        <Box sx={{ p: { xs: 3, md: 4 }, maxWidth: '100%' }}>{children}</Box>
       </Box>
     </Box>
   )

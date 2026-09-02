@@ -70,7 +70,7 @@ const Logo = ({ color, branding: brandingProp, displayName: displayNameProp }: L
 
   return (
     <div className='flex items-center min-is-0'>
-      <BrandedLogoMark branding={branding} />
+      <BrandedLogoMark branding={branding} height={28} />
       <LogoText
         color={color}
         ref={logoTextRef}

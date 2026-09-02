@@ -28,9 +28,11 @@ export default function BrandedLogoMark({ branding, className, height = 32 }: Br
         sx={{
           height,
           width: 'auto',
-          maxWidth: 160,
+          maxHeight: height,
+          maxWidth: 120,
           objectFit: 'contain',
-          display: 'block'
+          display: 'block',
+          flexShrink: 0
         }}
       />
     )
