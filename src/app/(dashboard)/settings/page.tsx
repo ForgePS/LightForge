@@ -1,7 +1,8 @@
-import { adminDb } from '@libs/firebase/admin'
 import SettingsClient from '@components/settings/SettingsClient'
 import NoTenantState from '@components/tenants/NoTenantState'
+import { getTenantGeneralSettings } from '@libs/platform/admin'
 import { tryActiveTenantContext } from '@libs/modules/tenantContext'
+import { adminDb } from '@libs/firebase/admin'
 
 export default async function SettingsPage() {
   const ctx = await tryActiveTenantContext()
@@ -10,16 +11,17 @@ export default async function SettingsPage() {
     return <NoTenantState title='Settings' />
   }
 
-  const settingsSnap = await adminDb.collection('tenants').doc(ctx.tenantId).collection('settings').doc('general').get()
-  const membersSnap = await adminDb.collection('tenants').doc(ctx.tenantId).collection('members').get()
+  const [generalSettings, membersSnap] = await Promise.all([
+    getTenantGeneralSettings(ctx.tenantId),
+    adminDb.collection('tenants').doc(ctx.tenantId).collection('members').get()
+  ])
 
-  const initialSettings = settingsSnap.exists
-    ? settingsSnap.data()!
-    : {
-        companyName: ctx.tenant.name,
-        timezone: 'America/New_York',
-        supportEmail: ctx.user.email
-      }
+  const initialSettings = {
+    companyName: generalSettings.companyName || ctx.tenant.name,
+    timezone: generalSettings.timezone || 'America/New_York',
+    supportEmail: generalSettings.supportEmail || ctx.user.email,
+    branding: generalSettings.branding
+  }
 
   const members = membersSnap.docs.map(doc => {
     const data = doc.data()

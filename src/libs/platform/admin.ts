@@ -1,5 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore'
 
+import { normalizeBranding } from '@libs/branding/types'
 import { adminAuth, adminDb } from '@libs/firebase/admin'
 import { slugify } from '@libs/firebase/constants'
 import type {
@@ -454,7 +455,16 @@ export async function getTenantModuleCounts(tenantId: string): Promise<TenantMod
 export async function getTenantGeneralSettings(tenantId: string) {
   const snap = await adminDb.collection('tenants').doc(tenantId).collection('settings').doc('general').get()
 
-  return snap.exists ? snap.data() : {}
+  if (!snap.exists) return {}
+
+  const data = snap.data()!
+
+  return {
+    companyName: typeof data.companyName === 'string' ? data.companyName : undefined,
+    timezone: typeof data.timezone === 'string' ? data.timezone : undefined,
+    supportEmail: typeof data.supportEmail === 'string' ? data.supportEmail : undefined,
+    branding: normalizeBranding(data.branding)
+  }
 }
 
 export async function updateTenantGeneralSettings(tenantId: string, settings: Record<string, unknown>) {
@@ -564,9 +574,20 @@ export async function getPlatformAnalytics(): Promise<PlatformAnalytics> {
 export async function getPlatformSettings(): Promise<PlatformSettings> {
   const snap = await adminDb.collection('platformSettings').doc('general').get()
 
-  if (!snap.exists) return DEFAULT_PLATFORM_SETTINGS
+  if (!snap.exists) return { ...DEFAULT_PLATFORM_SETTINGS }
 
-  return { ...DEFAULT_PLATFORM_SETTINGS, ...(snap.data() as Partial<PlatformSettings>) }
+  const data = snap.data()!
+
+  return {
+    supportEmail:
+      typeof data.supportEmail === 'string' ? data.supportEmail : DEFAULT_PLATFORM_SETTINGS.supportEmail,
+    maintenanceMode: Boolean(data.maintenanceMode),
+    defaultTrialDays:
+      typeof data.defaultTrialDays === 'number' ? data.defaultTrialDays : DEFAULT_PLATFORM_SETTINGS.defaultTrialDays,
+    allowSelfServeSignup: data.allowSelfServeSignup !== false,
+    platformName: typeof data.platformName === 'string' ? data.platformName : DEFAULT_PLATFORM_SETTINGS.platformName,
+    branding: normalizeBranding(data.branding)
+  }
 }
 
 export async function updatePlatformSettings(settings: Partial<PlatformSettings>) {
