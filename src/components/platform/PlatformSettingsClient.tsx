@@ -13,12 +13,17 @@ import Switch from '@mui/material/Switch'
 import Typography from '@mui/material/Typography'
 
 import CustomTextField from '@core/components/mui/TextField'
+import BrandingUploadSection from '@components/branding/BrandingUploadSection'
 import { PlatformPageHeader } from '@components/platform/platformUi'
+import { DEFAULT_BRANDING, normalizeBranding, type BrandingSettings } from '@libs/branding/types'
 import type { PlatformSettings } from '@libs/firebase/types'
 
 export default function PlatformSettingsClient({ initialSettings }: { initialSettings: PlatformSettings }) {
   const router = useRouter()
   const [settings, setSettings] = useState(initialSettings)
+  const [branding, setBranding] = useState<BrandingSettings>(
+    normalizeBranding(initialSettings.branding ?? DEFAULT_BRANDING)
+  )
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -115,6 +120,27 @@ export default function PlatformSettingsClient({ initialSettings }: { initialSet
             <Button variant='contained' disabled={loading} onClick={save} className='self-start'>
               Save settings
             </Button>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <Stack spacing={3}>
+            <Typography variant='h6'>Platform branding</Typography>
+            <Typography color='text.secondary'>
+              Default branding for the platform admin console and onboarding experience.
+            </Typography>
+            <BrandingUploadSection
+              branding={branding}
+              uploadUrl='/api/platform/branding'
+              disabled={loading}
+              onBrandingChange={setBranding}
+              onMessage={(msg, err) => {
+                setMessage(msg)
+                setError(err)
+              }}
+            />
           </Stack>
         </CardContent>
       </Card>

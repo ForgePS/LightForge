@@ -18,8 +18,10 @@ import TableRow from '@mui/material/TableRow'
 import Chip from '@mui/material/Chip'
 
 import CustomTextField from '@core/components/mui/TextField'
+import BrandingUploadSection from '@components/branding/BrandingUploadSection'
 import { useTenant } from '@components/providers/TenantProvider'
 import ConvertTenantDialog from '@components/tenants/ConvertTenantDialog'
+import { DEFAULT_BRANDING, normalizeBranding, type BrandingSettings } from '@libs/branding/types'
 
 type Member = { uid: string; email: string; displayName: string; role: string }
 
@@ -33,6 +35,9 @@ export default function SettingsClient({
   const { tenant, user } = useTenant()
   const router = useRouter()
   const [settings, setSettings] = useState(initialSettings)
+  const [branding, setBranding] = useState<BrandingSettings>(
+    normalizeBranding((initialSettings as { branding?: unknown }).branding ?? DEFAULT_BRANDING)
+  )
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteName, setInviteName] = useState('')
   const [inviteRole, setInviteRole] = useState('member')
@@ -42,6 +47,7 @@ export default function SettingsClient({
 
   const seatLimit = tenant?.seats ?? 0
   const overSeatLimit = seatLimit > 0 && members.length > seatLimit
+  const canManageBranding = tenant?.role === 'owner' || tenant?.role === 'admin'
 
   const saveSettings = async () => {
     setError(null)
@@ -133,13 +139,23 @@ export default function SettingsClient({
 
   useEffect(() => {
     setSettings(initialSettings)
+    setBranding(normalizeBranding((initialSettings as { branding?: unknown }).branding ?? DEFAULT_BRANDING))
   }, [initialSettings])
+
+  useEffect(() => {
+    fetch('/api/tenants/current/branding')
+      .then(res => res.json())
+      .then(data => {
+        if (data.ok) setBranding(normalizeBranding(data.branding))
+      })
+      .catch(() => {})
+  }, [])
 
   return (
     <Stack spacing={4}>
       <div>
         <Typography variant='h4'>Settings</Typography>
-        <Typography color='text.secondary'>Company profile, team, and billing</Typography>
+        <Typography color='text.secondary'>Company profile, branding, team, and billing</Typography>
       </div>
 
       {(message || error) && <Alert severity={error ? 'error' : 'success'}>{error || message}</Alert>}
@@ -176,6 +192,32 @@ export default function SettingsClient({
             <Button variant='contained' className='self-start' onClick={saveSettings}>
               Save settings
             </Button>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <Stack spacing={3}>
+            <Typography variant='h6'>Branding</Typography>
+            <Typography variant='body2' color='text.secondary'>
+              Upload your company logo, favicon, and brand colors for the workspace.
+            </Typography>
+            <BrandingUploadSection
+              branding={branding}
+              uploadUrl='/api/tenants/current/branding'
+              disabled={!canManageBranding}
+              onBrandingChange={setBranding}
+              onMessage={(msg, err) => {
+                setMessage(msg)
+                setError(err)
+              }}
+            />
+            {!canManageBranding && (
+              <Typography variant='body2' color='text.secondary'>
+                Only workspace owners and admins can update branding.
+              </Typography>
+            )}
           </Stack>
         </CardContent>
       </Card>

@@ -129,12 +129,22 @@ export type TenantTemplateSummary = {
   createdAt: string | null
 }
 
+import type { BrandingSettings } from '@libs/branding/types'
+
 export type PlatformSettings = {
   supportEmail: string
   maintenanceMode: boolean
   defaultTrialDays: number
   allowSelfServeSignup: boolean
   platformName: string
+  branding?: BrandingSettings
+}
+
+export type TenantGeneralSettings = {
+  companyName?: string
+  timezone?: string
+  supportEmail?: string
+  branding?: BrandingSettings
 }
 
 export type TenantModuleCount = {
