@@ -4,7 +4,7 @@ import path from 'path'
 
 import { FieldValue } from 'firebase-admin/firestore'
 
-import { adminDb, adminStorage } from '@libs/firebase/admin'
+import { adminDb, adminStorage, getStorageBucketName } from '@libs/firebase/admin'
 import {
   BRANDING_ASSET_FIELDS,
   DEFAULT_BRANDING,
@@ -68,7 +68,7 @@ export async function uploadBrandingAsset(
 ): Promise<string> {
   validateBrandingUpload(asset, file)
 
-  const bucket = adminStorage.bucket()
+  const bucket = adminStorage.bucket(getStorageBucketName())
   const ext = extFromFileName(file.name)
   const objectPath = storagePath(scope, asset, ext)
   const buffer = Buffer.from(await file.arrayBuffer())

@@ -36,6 +36,10 @@ env:
     availability:
       - BUILD
       - RUNTIME
+  - variable: FIREBASE_STORAGE_BUCKET
+    value: lightforge-2cf3b.firebasestorage.app
+    availability:
+      - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
     value: '1012853146594'
     availability:

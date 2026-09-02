@@ -5,6 +5,14 @@ import { getStorage, type Storage } from 'firebase-admin/storage'
 
 const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'lightforge-2cf3b'
 const databaseId = process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID || 'lightforge'
+const storageBucket =
+  process.env.FIREBASE_STORAGE_BUCKET ||
+  process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
+  `${projectId}.firebasestorage.app`
+
+export function getStorageBucketName() {
+  return storageBucket
+}
 
 function initAdminApp(): App {
   if (getApps().length) {
@@ -21,13 +29,15 @@ function initAdminApp(): App {
         clientEmail,
         privateKey
       }),
-      projectId
+      projectId,
+      storageBucket
     })
   }
 
   return initializeApp({
     credential: applicationDefault(),
-    projectId
+    projectId,
+    storageBucket
   })
 }
 
