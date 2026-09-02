@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { adminAuth, adminDb } from '@libs/firebase/admin'
 import { isPlatformAdmin } from '@libs/platform/admin'
 import { getTenantEnabledModules } from '@libs/modules/tenantModules'
+import { getTenantBranding } from '@libs/branding/storage'
 import type { ActiveTenantInfo, MemberRole, SessionUser, TenantStatus } from '@libs/firebase/types'
 
 export const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || '__session'
@@ -85,7 +86,10 @@ export async function getActiveTenant(user: SessionUser): Promise<ActiveTenantIn
 
   const tenant = tenantSnap.data()!
   const member = memberSnap.data()!
-  const enabledModules = await getTenantEnabledModules(tenantSnap.id)
+  const [enabledModules, branding] = await Promise.all([
+    getTenantEnabledModules(tenantSnap.id),
+    getTenantBranding(tenantSnap.id)
+  ])
 
   return {
     id: tenantSnap.id,
@@ -96,7 +100,8 @@ export async function getActiveTenant(user: SessionUser): Promise<ActiveTenantIn
     subscriptionStatus: tenant.subscription?.status,
     planId: tenant.subscription?.planId,
     seats: tenant.subscription?.seats,
-    enabledModules
+    enabledModules,
+    branding
   }
 
 }

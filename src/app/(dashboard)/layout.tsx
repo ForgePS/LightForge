@@ -13,6 +13,7 @@ import Navbar from '@components/layout/vertical/Navbar'
 import VerticalFooter from '@components/layout/vertical/Footer'
 import HorizontalFooter from '@components/layout/horizontal/Footer'
 import ScrollToTop from '@core/components/scroll-to-top'
+import BrandingEffects from '@components/branding/BrandingEffects'
 import { TenantProvider } from '@components/providers/TenantProvider'
 
 import { getMode, getSystemMode } from '@core/utils/serverHelpers'
@@ -46,6 +47,7 @@ const Layout = async (props: ChildrenType) => {
   return (
     <Providers direction={direction}>
       <TenantProvider value={{ user, tenant, tenants }}>
+        <BrandingEffects branding={tenant?.branding} />
         {accessBlocked && !user.isPlatformAdmin && (
           <Alert
             severity='warning'

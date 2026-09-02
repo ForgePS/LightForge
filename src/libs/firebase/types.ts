@@ -1,3 +1,5 @@
+import type { BrandingSettings } from '@libs/branding/types'
+
 export type TenantStatus = 'trial' | 'active' | 'suspended'
 export type MemberRole = 'owner' | 'admin' | 'member'
 
@@ -90,6 +92,7 @@ export type ActiveTenantInfo = {
   planId?: SubscriptionPlanId
   seats?: number
   enabledModules?: string[]
+  branding?: BrandingSettings
 }
 
 export type PlatformTenantSummary = {
@@ -128,8 +131,6 @@ export type TenantTemplateSummary = {
   sourceTenantName: string | null
   createdAt: string | null
 }
-
-import type { BrandingSettings } from '@libs/branding/types'
 
 export type PlatformSettings = {
   supportEmail: string

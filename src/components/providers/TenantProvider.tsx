@@ -31,3 +31,7 @@ export function useTenant() {
 
   return ctx
 }
+
+export function useOptionalTenant() {
+  return useContext(TenantContext)
+}

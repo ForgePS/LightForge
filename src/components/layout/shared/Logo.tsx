@@ -1,24 +1,18 @@
 'use client'
 
-// React Imports
 import { useEffect, useRef } from 'react'
 import type { CSSProperties } from 'react'
 
-// Third-party Imports
 import styled from '@emotion/styled'
+import { useColorScheme } from '@mui/material/styles'
 
-// Type Imports
 import type { VerticalNavContextProps } from '@menu/contexts/verticalNavContext'
-
-// Component Imports
-import VuexyLogo from '@core/svg/Logo'
-
-// Config Imports
+import BrandedLogoMark from '@components/branding/BrandedLogoMark'
+import { useOptionalTenant } from '@components/providers/TenantProvider'
 import themeConfig from '@configs/themeConfig'
-
-// Hook Imports
 import useVerticalNav from '@menu/hooks/useVerticalNav'
 import { useSettings } from '@core/hooks/useSettings'
+import type { BrandingSettings } from '@libs/branding/types'
 
 type LogoTextProps = {
   isHovered?: VerticalNavContextProps['isHovered']
@@ -43,15 +37,20 @@ const LogoText = styled.span<LogoTextProps>`
       : 'opacity: 1; margin-inline-start: 12px;'}
 `
 
-const Logo = ({ color }: { color?: CSSProperties['color'] }) => {
-  // Refs
-  const logoTextRef = useRef<HTMLSpanElement>(null)
+type LogoProps = {
+  color?: CSSProperties['color']
+  branding?: BrandingSettings | null
+  displayName?: string
+}
 
-  // Hooks
+const Logo = ({ color, branding: brandingProp, displayName: displayNameProp }: LogoProps) => {
+  const logoTextRef = useRef<HTMLSpanElement>(null)
   const { isHovered, transitionDuration, isBreakpointReached } = useVerticalNav()
   const { settings } = useSettings()
-
-  // Vars
+  const { mode } = useColorScheme()
+  const tenantCtx = useOptionalTenant()
+  const branding = brandingProp ?? tenantCtx?.tenant?.branding ?? null
+  const displayName = displayNameProp ?? tenantCtx?.tenant?.name ?? themeConfig.templateName
   const { layout } = settings
 
   useEffect(() => {
@@ -67,11 +66,11 @@ const Logo = ({ color }: { color?: CSSProperties['color'] }) => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHovered, layout, isBreakpointReached])
+  }, [isHovered, layout, isBreakpointReached, mode])
 
   return (
-    <div className='flex items-center'>
-      <VuexyLogo className='text-2xl text-primary' />
+    <div className='flex items-center min-is-0'>
+      <BrandedLogoMark branding={branding} />
       <LogoText
         color={color}
         ref={logoTextRef}
@@ -80,7 +79,7 @@ const Logo = ({ color }: { color?: CSSProperties['color'] }) => {
         transitionDuration={transitionDuration}
         isBreakpointReached={isBreakpointReached}
       >
-        {themeConfig.templateName}
+        {displayName}
       </LogoText>
     </div>
   )

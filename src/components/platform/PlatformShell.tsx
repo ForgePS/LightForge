@@ -19,8 +19,9 @@ import Typography from '@mui/material/Typography'
 import { alpha } from '@mui/material/styles'
 import type { ReactNode } from 'react'
 
-import VuexyLogo from '@core/svg/Logo'
+import BrandedLogoMark from '@components/branding/BrandedLogoMark'
 import PlatformUserMenu from '@components/platform/PlatformUserMenu'
+import type { BrandingSettings } from '@libs/branding/types'
 import type { SessionUser } from '@libs/firebase/types'
 
 const drawerWidth = 280
@@ -61,10 +62,14 @@ const navSections = [
 
 export default function PlatformShell({
   user,
-  children
+  children,
+  branding,
+  platformName = 'LightForge'
 }: {
   user: SessionUser
   children: ReactNode
+  branding?: BrandingSettings | null
+  platformName?: string
 }) {
   const pathname = usePathname()
 
@@ -80,10 +85,12 @@ export default function PlatformShell({
         sx={{ borderBottom: 1, borderColor: 'divider', zIndex: theme => theme.zIndex.drawer + 1 }}
       >
         <Toolbar className='gap-3'>
-          <Link href='/platform' className='flex items-center gap-2 no-underline text-inherit'>
-            <VuexyLogo className='text-2xl text-primary' />
-            <Box className='hidden md:block'>
-              <Typography variant='h6'>LightForge Platform</Typography>
+          <Link href='/platform' className='flex items-center gap-2 no-underline text-inherit min-is-0'>
+            <BrandedLogoMark branding={branding} />
+            <Box className='hidden md:block min-is-0'>
+              <Typography variant='h6' noWrap>
+                {platformName}
+              </Typography>
               <Typography variant='caption' color='text.secondary'>
                 Admin control center
               </Typography>
