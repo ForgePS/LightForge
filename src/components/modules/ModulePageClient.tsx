@@ -22,6 +22,7 @@ import Alert from '@mui/material/Alert'
 import Chip from '@mui/material/Chip'
 
 import CustomTextField from '@core/components/mui/TextField'
+import CustomerPortalPanel from '@components/customer-portal/CustomerPortalPanel'
 import type { ModuleDef } from '@libs/modules/registry'
 
 type RecordRow = Record<string, unknown> & { id: string }
@@ -189,7 +190,12 @@ export default function ModulePageClient({
         </CardContent>
       </Card>
 
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth='sm'>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        fullWidth
+        maxWidth={module.key === 'customers' && editing ? 'md' : 'sm'}
+      >
         <DialogTitle>
           {editing ? `Edit ${module.singular}` : `New ${module.singular}`}
         </DialogTitle>
@@ -226,6 +232,7 @@ export default function ModulePageClient({
                 />
               )
             )}
+            {module.key === 'customers' && editing && <CustomerPortalPanel customerId={editing.id} />}
           </Stack>
         </DialogContent>
         <DialogActions>

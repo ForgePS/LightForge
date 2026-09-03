@@ -19,6 +19,7 @@ import Chip from '@mui/material/Chip'
 
 import CustomTextField from '@core/components/mui/TextField'
 import BrandingUploadSection from '@components/branding/BrandingUploadSection'
+import CustomerPortalSettingsSection from '@components/settings/CustomerPortalSettingsSection'
 import { useTenant } from '@components/providers/TenantProvider'
 import ConvertTenantDialog from '@components/tenants/ConvertTenantDialog'
 import { DEFAULT_BRANDING, normalizeBranding, type BrandingSettings } from '@libs/branding/types'
@@ -221,6 +222,8 @@ export default function SettingsClient({
           </Stack>
         </CardContent>
       </Card>
+
+      <CustomerPortalSettingsSection />
 
       <Card>
         <CardContent>

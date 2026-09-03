@@ -13,8 +13,11 @@ const horizontalMenuData = (): HorizontalMenuDataType[] => [
       { label: 'Customers', href: '/customers' },
       { label: 'Properties', href: '/properties' },
       { label: 'Mockups', href: '/mockups' },
+      { label: 'Lighting Package', href: '/lighting-items' },
+      { label: 'Photos', href: '/photos' },
       { label: 'Contacts', href: '/contacts' },
       { label: 'Proposals', href: '/proposals' },
+      { label: 'Documents', href: '/documents' },
       { label: 'Commercial Accounts', href: '/commercial-accounts' },
       { label: 'Rebooking', href: '/rebooking' }
     ]
@@ -42,7 +45,10 @@ const horizontalMenuData = (): HorizontalMenuDataType[] => [
   {
     label: 'Finance',
     icon: 'tabler-currency-dollar',
-    children: [{ label: 'Invoices', href: '/invoices' }]
+    children: [
+      { label: 'Invoices', href: '/invoices' },
+      { label: 'Payments', href: '/payments' }
+    ]
   },
   {
     label: 'Marketing',

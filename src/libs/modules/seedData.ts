@@ -37,7 +37,22 @@
         city: 'Greenville',
         state: 'SC',
         zip: '29601',
-        serviceNotes: 'Ladder access on south side; pets indoors'
+        serviceNotes: 'Ladder access on south side; pets indoors',
+        customerAccessInstructions: 'Use the side gate; dogs will be indoors.',
+        petNotice: 'Two friendly labs — please keep gate closed',
+        preferredArrival: 'Morning window preferred',
+        timerLocation: 'Garage outlet on left wall',
+        powerSourceSummary: 'Exterior GFCI near garage'
+      },
+      {
+        name: 'Anderson Guest Cottage',
+        customerName: 'Anderson Residence',
+        address: '414 Cedar Lane',
+        city: 'Greenville',
+        state: 'SC',
+        zip: '29601',
+        serviceNotes: 'Smaller package for guest cottage eaves',
+        preferredArrival: 'Afternoon preferred'
       },
       {
         name: 'Maple Grove Clubhouse',
@@ -107,27 +122,133 @@
     proposals: [
       {
         title: 'Anderson 2026 Holiday Package',
+        publicNumber: 'PROP-2026-00412',
         customerName: 'Anderson Residence',
         propertyName: 'Anderson Main Home',
         amountCents: 185000,
+        depositCents: 55500,
+        taxCents: 0,
+        version: 1,
         status: 'accepted',
+        customerSummary: 'Warm white roofline, tree wraps, and wreath package for the 2026 season.',
+        customerTerms: 'Includes install, mid-season service, and takedown. Deposit due on acceptance.',
+        lineItems: [
+          {
+            id: 'roof',
+            name: 'Warm White C9 Roofline',
+            serviceArea: 'Roofline',
+            description: '185 linear feet',
+            amountCents: 120000,
+            optional: false,
+            selected: true
+          },
+          {
+            id: 'trees',
+            name: 'Oak tree wraps',
+            serviceArea: 'Trees',
+            description: 'Two front oaks',
+            amountCents: 45000,
+            optional: false,
+            selected: true
+          },
+          {
+            id: 'wreath',
+            name: '48-inch pre-lit wreath',
+            serviceArea: 'Wreaths',
+            amountCents: 20000,
+            optional: false,
+            selected: true
+          }
+        ],
         notes: 'Includes install, mid-season service, takedown'
       },
       {
         title: 'Maple Grove Common Areas',
+        publicNumber: 'PROP-2026-00418',
         customerName: 'Maple Grove HOA',
         propertyName: 'Maple Grove Clubhouse',
         amountCents: 920000,
+        depositCents: 276000,
+        taxCents: 0,
+        version: 1,
         status: 'sent',
+        customerSummary: 'Clubhouse façade and entry lighting for the HOA common areas.',
+        customerTerms: '3-year term option available. Board approval required before install.',
+        lineItems: [
+          {
+            id: 'facade',
+            name: 'Clubhouse canopy outline',
+            serviceArea: 'Commercial façade',
+            amountCents: 680000,
+            optional: false,
+            selected: true
+          },
+          {
+            id: 'entries',
+            name: 'Entry columns',
+            serviceArea: 'Columns',
+            amountCents: 180000,
+            optional: false,
+            selected: true
+          },
+          {
+            id: 'trees-opt',
+            name: 'Additional courtyard trees',
+            serviceArea: 'Trees',
+            amountCents: 60000,
+            optional: true,
+            selected: false
+          }
+        ],
         notes: '3-year term option included'
       },
       {
         title: 'Riverfront Patio Glow',
+        publicNumber: 'PROP-2026-00421',
         customerName: 'Riverfront Bistro',
         propertyName: 'Riverfront Patio',
         amountCents: 275000,
         status: 'draft',
         notes: 'Commercial outlet survey pending'
+      }
+    ],
+    documents: [
+      {
+        title: 'Anderson seasonal service agreement',
+        publicNumber: 'DOC-2026-1001',
+        customerName: 'Anderson Residence',
+        propertyName: 'Anderson Main Home',
+        category: 'Service agreement',
+        status: 'signed',
+        signatureStatus: 'signed',
+        version: 1,
+        customerVisible: 'true',
+        url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        signedAt: '2026-10-01T15:00:00.000Z',
+        signerName: 'Sarah Anderson'
+      },
+      {
+        title: 'Maple Grove property authorization',
+        publicNumber: 'DOC-2026-1002',
+        customerName: 'Maple Grove HOA',
+        propertyName: 'Maple Grove Clubhouse',
+        category: 'Property authorization',
+        status: 'pending_signature',
+        signatureStatus: 'pending',
+        version: 1,
+        customerVisible: 'true',
+        url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'
+      },
+      {
+        title: 'Internal cost worksheet',
+        publicNumber: 'DOC-2026-INTERNAL',
+        customerName: 'Anderson Residence',
+        propertyName: 'Anderson Main Home',
+        category: 'Other customer document',
+        status: 'available',
+        signatureStatus: 'not_required',
+        customerVisible: 'false',
+        notes: 'Staff only — never portal'
       }
     ],
     commercialAccounts: [
@@ -181,8 +302,13 @@
         title: 'Anderson Holiday Install',
         propertyName: 'Anderson Main Home',
         type: 'install',
-        status: 'scheduled',
+        status: 'en_route',
         scheduledDate: '2026-11-10',
+        arrivalWindow: '8:00–10:00 AM',
+        crewFirstName: 'Marcus',
+        technicianEnRoute: true,
+        weatherNotice: 'Light rain possible — crew will tarp tools and continue unless winds exceed safe limits.',
+        customerPrepNotes: 'Please clear driveway parking and keep pets indoors.',
         crewNotes: 'Bring C9 warm white and clips for architectural shingles'
       },
       {
@@ -274,27 +400,124 @@
     serviceIssues: [
       {
         title: 'Section out on front gable',
+        publicNumber: 'SR-2026-00001',
         propertyName: 'Anderson Main Home',
         jobTitle: 'Anderson Mid-season Service',
+        problemType: 'Section of lights out',
+        problemLocation: 'Roofline',
+        customerDescription: 'Front gable section went dark after the wind storm.',
         priority: 'medium',
         status: 'open',
-        notes: 'Homeowner reported after wind storm'
+        notes: 'Homeowner reported after wind storm',
+        customerName: 'Anderson Residence',
+        source: 'staff'
       },
       {
         title: 'Controller reset needed',
+        publicNumber: 'SR-2026-00002',
         propertyName: 'Maple Grove Clubhouse',
         jobTitle: 'Maple Grove Clubhouse Install',
+        problemType: 'Timer problem',
+        problemLocation: 'Other',
         priority: 'low',
         status: 'in_progress',
-        notes: 'Timer drifted after power blip'
+        notes: 'Timer drifted after power blip',
+        customerName: 'Maple Grove HOA',
+        source: 'staff'
       },
       {
         title: 'Broken clip on patio rail',
+        publicNumber: 'SR-2026-00003',
         propertyName: 'Riverfront Patio',
         jobTitle: '',
+        problemType: 'Decorations damaged',
+        problemLocation: 'Other',
         priority: 'high',
         status: 'resolved',
-        notes: 'Replaced during walkthrough'
+        customerVisibleResolution: 'Clip replaced during walkthrough.',
+        notes: 'Replaced during walkthrough',
+        customerName: 'Riverfront Bistro',
+        source: 'staff'
+      }
+    ],
+    lightingItems: [
+      {
+        name: 'Warm White C9 Lights',
+        customerName: 'Anderson Residence',
+        propertyName: 'Anderson Main Home',
+        serviceArea: 'Roofline',
+        lightType: 'C9',
+        color: 'Warm white',
+        linearFeet: 185,
+        installationLocation: 'Front and right elevation',
+        customerNotes: 'Included in seasonal package',
+        customerVisible: 'true',
+        status: 'Installed'
+      },
+      {
+        name: 'Oak tree wraps',
+        customerName: 'Anderson Residence',
+        propertyName: 'Anderson Main Home',
+        serviceArea: 'Trees',
+        lightType: 'Mini lights',
+        color: 'Warm white',
+        quantity: 2,
+        installationLocation: 'Two front oak trees',
+        customerVisible: 'true',
+        status: 'Installed'
+      },
+      {
+        name: '48-inch pre-lit wreath',
+        customerName: 'Anderson Residence',
+        propertyName: 'Anderson Main Home',
+        serviceArea: 'Wreaths',
+        lightType: 'Pre-lit wreath',
+        color: 'Warm white',
+        quantity: 1,
+        installationLocation: 'Front peak',
+        customerVisible: 'true',
+        status: 'Installed'
+      },
+      {
+        name: 'Clubhouse canopy outline',
+        customerName: 'Maple Grove HOA',
+        propertyName: 'Maple Grove Clubhouse',
+        serviceArea: 'Commercial façade',
+        lightType: 'C9',
+        color: 'Cool white',
+        linearFeet: 240,
+        customerVisible: 'true',
+        status: 'Scheduled'
+      }
+    ],
+    photos: [
+      {
+        title: 'Anderson completed roofline',
+        customerName: 'Anderson Residence',
+        propertyName: 'Anderson Main Home',
+        category: 'Completed installation',
+        url: 'https://images.unsplash.com/photo-1482517964108-0c2d5e0b5e3d?auto=format&fit=crop&w=1200&q=80',
+        caption: 'Front elevation after install',
+        customerVisible: 'true'
+      },
+      {
+        title: 'Anderson design preview',
+        customerName: 'Anderson Residence',
+        propertyName: 'Anderson Main Home',
+        category: 'Design preview',
+        url: 'https://images.unsplash.com/photo-1512389142860-9c449e58a543?auto=format&fit=crop&w=1200&q=80',
+        caption: 'Approved warm white concept',
+        customerVisible: 'true'
+      },
+      {
+        title: 'Internal crew reference',
+        customerName: 'Anderson Residence',
+        propertyName: 'Anderson Main Home',
+        category: 'Property reference',
+        url: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=1200&q=80',
+        caption: 'Staff only ladder access note',
+        customerVisible: 'false',
+        notes: 'Do not show in portal'
       }
     ],
     timeEntries: [
@@ -381,8 +604,13 @@
         customerName: 'Anderson Residence',
         jobTitle: 'Anderson Holiday Install',
         amountCents: 185000,
+        amountPaidCents: 185000,
         status: 'paid',
         dueDate: '2026-11-01',
+        creditsCents: 0,
+        lineItems: [
+          { name: '2026 holiday package', amountCents: 185000 }
+        ],
         notes: 'Deposit + balance paid'
       },
       {
@@ -390,8 +618,13 @@
         customerName: 'Maple Grove HOA',
         jobTitle: 'Maple Grove Clubhouse Install',
         amountCents: 460000,
+        amountPaidCents: 0,
         status: 'sent',
         dueDate: '2026-11-15',
+        creditsCents: 0,
+        lineItems: [
+          { name: '50% deposit — clubhouse install', amountCents: 460000 }
+        ],
         notes: '50% deposit invoice'
       },
       {
@@ -399,9 +632,22 @@
         customerName: 'Riverfront Bistro',
         jobTitle: '',
         amountCents: 50000,
+        amountPaidCents: 0,
         status: 'draft',
         dueDate: '2026-11-20',
         notes: 'Design retainer'
+      }
+    ],
+    payments: [
+      {
+        publicNumber: 'PAY-INV-2026-1042-SEED01',
+        invoiceNumber: 'INV-2026-1042',
+        customerName: 'Anderson Residence',
+        amountCents: 185000,
+        status: 'completed',
+        methodLabel: 'Card',
+        receiptUrl: 'https://pay.stripe.com/receipts/test_seed',
+        notes: 'Seeded completed payment'
       }
     ],
     messages: [
@@ -410,7 +656,10 @@
         channel: 'email',
         subject: 'Install confirmed for Nov 10',
         body: 'Your holiday lighting install is scheduled for November 10 starting at 8am.',
-        status: 'sent'
+        status: 'sent',
+        customerName: 'Anderson Residence',
+        customerId: '',
+        threadPublicNumber: 'MSG-2026-SEED1'
       },
       {
         to: '555-201-4411',
@@ -425,6 +674,28 @@
         subject: 'Draft proposal ready',
         body: 'Attached is the patio lighting draft proposal for review.',
         status: 'draft'
+      }
+    ],
+    messageThreads: [
+      {
+        publicNumber: 'MSG-2026-SEED1',
+        subject: 'Install day questions',
+        preview: 'Will someone need to be home for the install?',
+        customerName: 'Anderson Residence',
+        propertyName: 'Anderson Main Home',
+        customerVisible: true,
+        customerUnread: true,
+        staffUnread: false,
+        source: 'seed'
+      }
+    ],
+    referralInvites: [
+      {
+        customerName: 'Anderson Residence',
+        friendName: 'Jamie Ortiz',
+        friendEmail: 'jamie.ortiz@example.com',
+        status: 'pending',
+        source: 'seed'
       }
     ],
     reviews: [

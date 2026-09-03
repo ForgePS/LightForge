@@ -95,11 +95,32 @@ export const MODULES: ModuleDef[] = [
     href: '/proposals',
     fields: [
       { key: 'title', label: 'Title', type: 'text', required: true, list: true },
+      { key: 'publicNumber', label: 'Proposal #', type: 'text', list: true },
       { key: 'customerName', label: 'Customer', type: 'text', list: true },
       { key: 'propertyName', label: 'Property', type: 'text', list: true },
       { key: 'amountCents', label: 'Amount (cents)', type: 'number', list: true },
-      { key: 'status', label: 'Status', type: 'select', options: [{ value: 'draft', label: 'Draft' }, { value: 'sent', label: 'Sent' }, { value: 'accepted', label: 'Accepted' }, { value: 'declined', label: 'Declined' }], list: true },
-      { key: 'notes', label: 'Notes', type: 'textarea' }
+      { key: 'depositCents', label: 'Deposit (cents)', type: 'number' },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'select',
+        options: [
+          { value: 'draft', label: 'Draft' },
+          { value: 'sent', label: 'Sent' },
+          { value: 'viewed', label: 'Viewed' },
+          { value: 'change_requested', label: 'Change requested' },
+          { value: 'accepted_pending_signature', label: 'Accepted pending signature' },
+          { value: 'accepted_pending_deposit', label: 'Accepted pending deposit' },
+          { value: 'accepted', label: 'Accepted' },
+          { value: 'approved', label: 'Approved' },
+          { value: 'declined', label: 'Declined' },
+          { value: 'expired', label: 'Expired' }
+        ],
+        list: true
+      },
+      { key: 'customerSummary', label: 'Customer summary', type: 'textarea' },
+      { key: 'customerTerms', label: 'Customer terms', type: 'textarea' },
+      { key: 'notes', label: 'Staff notes', type: 'textarea' }
     ]
   },
   {
@@ -202,11 +223,101 @@ export const MODULES: ModuleDef[] = [
     href: '/service-issues',
     fields: [
       { key: 'title', label: 'Title', type: 'text', required: true, list: true },
+      { key: 'publicNumber', label: 'Request #', type: 'text', list: true },
       { key: 'propertyName', label: 'Property', type: 'text', list: true },
       { key: 'jobTitle', label: 'Job', type: 'text', list: true },
+      { key: 'problemType', label: 'Problem type', type: 'text', list: true },
       { key: 'priority', label: 'Priority', type: 'select', options: [{ value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' }], list: true },
       { key: 'status', label: 'Status', type: 'select', options: [{ value: 'open', label: 'Open' }, { value: 'in_progress', label: 'In progress' }, { value: 'resolved', label: 'Resolved' }], list: true },
+      { key: 'customerVisibleResolution', label: 'Customer resolution', type: 'textarea' },
       { key: 'notes', label: 'Notes', type: 'textarea' }
+    ]
+  },
+  {
+    key: 'lightingItems',
+    collection: 'lightingItems',
+    title: 'Lighting Package',
+    singular: 'Lighting item',
+    description: 'Customer-facing lighting package items by service area',
+    href: '/lighting-items',
+    fields: [
+      { key: 'name', label: 'Item name', type: 'text', required: true, list: true },
+      { key: 'customerName', label: 'Customer', type: 'text', list: true },
+      { key: 'propertyName', label: 'Property', type: 'text', list: true },
+      { key: 'serviceArea', label: 'Service area', type: 'text', required: true, list: true },
+      { key: 'lightType', label: 'Light type', type: 'text', list: true },
+      { key: 'color', label: 'Color', type: 'text', list: true },
+      { key: 'linearFeet', label: 'Linear feet', type: 'number', list: true },
+      { key: 'quantity', label: 'Quantity', type: 'number' },
+      { key: 'installationLocation', label: 'Location', type: 'text' },
+      { key: 'customerNotes', label: 'Customer notes', type: 'textarea' },
+      { key: 'customerVisible', label: 'Customer visible', type: 'select', options: [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }], list: true },
+      { key: 'status', label: 'Status', type: 'text', list: true },
+      { key: 'notes', label: 'Staff notes', type: 'textarea' }
+    ]
+  },
+  {
+    key: 'photos',
+    collection: 'photos',
+    title: 'Photos',
+    singular: 'Photo',
+    description: 'Design, install, and service photos',
+    href: '/photos',
+    fields: [
+      { key: 'title', label: 'Title', type: 'text', required: true, list: true },
+      { key: 'customerName', label: 'Customer', type: 'text', list: true },
+      { key: 'propertyName', label: 'Property', type: 'text', list: true },
+      { key: 'category', label: 'Category', type: 'select', options: [
+        { value: 'Design preview', label: 'Design preview' },
+        { value: 'Before installation', label: 'Before installation' },
+        { value: 'Completed installation', label: 'Completed installation' },
+        { value: 'Service issue', label: 'Service issue' },
+        { value: 'Service completion', label: 'Service completion' },
+        { value: 'Removal completion', label: 'Removal completion' },
+        { value: 'Customer-uploaded reference', label: 'Customer-uploaded reference' },
+        { value: 'Property reference', label: 'Property reference' }
+      ], list: true },
+      { key: 'url', label: 'Image URL', type: 'url', required: true },
+      { key: 'caption', label: 'Caption', type: 'text' },
+      { key: 'customerVisible', label: 'Customer visible', type: 'select', options: [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }], list: true },
+      { key: 'notes', label: 'Staff notes', type: 'textarea' }
+    ]
+  },
+  {
+    key: 'documents',
+    collection: 'documents',
+    title: 'Documents',
+    singular: 'Document',
+    description: 'Customer agreements and portal documents',
+    href: '/documents',
+    fields: [
+      { key: 'title', label: 'Title', type: 'text', required: true, list: true },
+      { key: 'publicNumber', label: 'Document #', type: 'text', list: true },
+      { key: 'customerName', label: 'Customer', type: 'text', list: true },
+      { key: 'propertyName', label: 'Property', type: 'text', list: true },
+      {
+        key: 'category',
+        label: 'Category',
+        type: 'select',
+        options: [
+          { value: 'Proposal', label: 'Proposal' },
+          { value: 'Service agreement', label: 'Service agreement' },
+          { value: 'Signed contract', label: 'Signed contract' },
+          { value: 'Invoice', label: 'Invoice' },
+          { value: 'Payment receipt', label: 'Payment receipt' },
+          { value: 'Installation agreement', label: 'Installation agreement' },
+          { value: 'Property authorization', label: 'Property authorization' },
+          { value: 'Warranty information', label: 'Warranty information' },
+          { value: 'Care and safety instructions', label: 'Care and safety instructions' },
+          { value: 'Other customer document', label: 'Other customer document' }
+        ],
+        list: true
+      },
+      { key: 'status', label: 'Status', type: 'select', options: [{ value: 'available', label: 'Available' }, { value: 'pending_signature', label: 'Pending signature' }, { value: 'signed', label: 'Signed' }], list: true },
+      { key: 'signatureStatus', label: 'Signature', type: 'select', options: [{ value: 'not_required', label: 'Not required' }, { value: 'pending', label: 'Pending' }, { value: 'signed', label: 'Signed' }], list: true },
+      { key: 'url', label: 'Download URL', type: 'url' },
+      { key: 'customerVisible', label: 'Customer visible', type: 'select', options: [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }], list: true },
+      { key: 'notes', label: 'Staff notes', type: 'textarea' }
     ]
   },
   {
@@ -269,8 +380,54 @@ export const MODULES: ModuleDef[] = [
       { key: 'customerName', label: 'Customer', type: 'text', list: true },
       { key: 'jobTitle', label: 'Job', type: 'text', list: true },
       { key: 'amountCents', label: 'Amount (cents)', type: 'number', list: true },
-      { key: 'status', label: 'Status', type: 'select', options: [{ value: 'draft', label: 'Draft' }, { value: 'sent', label: 'Sent' }, { value: 'paid', label: 'Paid' }, { value: 'void', label: 'Void' }], list: true },
+      { key: 'amountPaidCents', label: 'Paid (cents)', type: 'number', list: true },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'select',
+        options: [
+          { value: 'draft', label: 'Draft' },
+          { value: 'sent', label: 'Sent' },
+          { value: 'open', label: 'Open' },
+          { value: 'partially_paid', label: 'Partially paid' },
+          { value: 'paid', label: 'Paid' },
+          { value: 'past_due', label: 'Past due' },
+          { value: 'void', label: 'Void' },
+          { value: 'refunded', label: 'Refunded' }
+        ],
+        list: true
+      },
       { key: 'dueDate', label: 'Due date', type: 'date', list: true },
+      { key: 'creditsCents', label: 'Credits (cents)', type: 'number' },
+      { key: 'notes', label: 'Staff notes', type: 'textarea' }
+    ]
+  },
+  {
+    key: 'payments',
+    collection: 'payments',
+    title: 'Payments',
+    singular: 'Payment',
+    description: 'Customer payment records from portal and office',
+    href: '/payments',
+    fields: [
+      { key: 'publicNumber', label: 'Payment #', type: 'text', list: true },
+      { key: 'invoiceNumber', label: 'Invoice #', type: 'text', list: true },
+      { key: 'customerName', label: 'Customer', type: 'text', list: true },
+      { key: 'amountCents', label: 'Amount (cents)', type: 'number', list: true },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'select',
+        options: [
+          { value: 'pending', label: 'Pending' },
+          { value: 'completed', label: 'Completed' },
+          { value: 'failed', label: 'Failed' },
+          { value: 'refunded', label: 'Refunded' }
+        ],
+        list: true
+      },
+      { key: 'methodLabel', label: 'Method', type: 'text', list: true },
+      { key: 'receiptUrl', label: 'Receipt URL', type: 'url' },
       { key: 'notes', label: 'Notes', type: 'textarea' }
     ]
   },

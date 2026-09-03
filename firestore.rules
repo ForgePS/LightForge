@@ -86,5 +86,14 @@ service cloud.firestore {
         allow write: if isMember(tenantId) || isPlatformAdmin();
       }
     }
+
+    // Customer portal lookup indexes — Admin SDK only
+    match /portalShortCodes/{shortCode} {
+      allow read, write: if false;
+    }
+
+    match /portalSessionIndex/{sessionHash} {
+      allow read, write: if false;
+    }
   }
 }

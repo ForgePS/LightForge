@@ -4,6 +4,7 @@ import type Stripe from 'stripe'
 
 import { adminDb } from '@libs/firebase/admin'
 import { getStripe, subscriptionFromStripe } from '@libs/billing/stripe'
+import { reconcilePortalCheckoutSession } from '@libs/customer-portal/billing'
 import type { SubscriptionPlanId, SubscriptionStatus } from '@libs/firebase/types'
 
 export async function POST(request: Request) {
@@ -31,27 +32,32 @@ export async function POST(request: Request) {
   }
 
   try {
-    if (event.type === 'checkout.session.completed') {
+    if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
       const session = event.data.object as Stripe.Checkout.Session
-      const tenantId = session.metadata?.tenantId
-      const planId = (session.metadata?.planId || 'starter') as SubscriptionPlanId
 
-      if (tenantId) {
-        const subscription = subscriptionFromStripe({
-          planId,
-          status: 'active',
-          stripeCustomerId: typeof session.customer === 'string' ? session.customer : null,
-          stripeSubscriptionId: typeof session.subscription === 'string' ? session.subscription : null
-        })
+      if (session.metadata?.purpose === 'customer_portal_invoice') {
+        await reconcilePortalCheckoutSession(session)
+      } else if (event.type === 'checkout.session.completed') {
+        const tenantId = session.metadata?.tenantId
+        const planId = (session.metadata?.planId || 'starter') as SubscriptionPlanId
 
-        await adminDb.collection('tenants').doc(tenantId).set(
-          {
+        if (tenantId) {
+          const subscription = subscriptionFromStripe({
+            planId,
             status: 'active',
-            subscription,
-            updatedAt: FieldValue.serverTimestamp()
-          },
-          { merge: true }
-        )
+            stripeCustomerId: typeof session.customer === 'string' ? session.customer : null,
+            stripeSubscriptionId: typeof session.subscription === 'string' ? session.subscription : null
+          })
+
+          await adminDb.collection('tenants').doc(tenantId).set(
+            {
+              status: 'active',
+              subscription,
+              updatedAt: FieldValue.serverTimestamp()
+            },
+            { merge: true }
+          )
+        }
       }
     }
 

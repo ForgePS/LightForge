@@ -13,8 +13,11 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
       { label: 'Customers', href: '/customers', icon: 'tabler-user' },
       { label: 'Properties', href: '/properties', icon: 'tabler-home' },
       { label: 'Mockups', href: '/mockups', icon: 'tabler-photo' },
+      { label: 'Lighting Package', href: '/lighting-items', icon: 'tabler-bulb' },
+      { label: 'Photos', href: '/photos', icon: 'tabler-camera' },
       { label: 'Contacts', href: '/contacts', icon: 'tabler-address-book' },
       { label: 'Proposals', href: '/proposals', icon: 'tabler-file-description' },
+      { label: 'Documents', href: '/documents', icon: 'tabler-files' },
       { label: 'Commercial Accounts', href: '/commercial-accounts', icon: 'tabler-building-skyscraper' },
       { label: 'Rebooking', href: '/rebooking', icon: 'tabler-refresh' }
     ]
@@ -42,7 +45,10 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
   {
     label: 'Finance',
     icon: 'tabler-currency-dollar',
-    children: [{ label: 'Invoices', href: '/invoices', icon: 'tabler-file-invoice' }]
+    children: [
+      { label: 'Invoices', href: '/invoices', icon: 'tabler-file-invoice' },
+      { label: 'Payments', href: '/payments', icon: 'tabler-credit-card' }
+    ]
   },
   {
     label: 'Marketing',
