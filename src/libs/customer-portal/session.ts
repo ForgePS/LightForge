@@ -8,7 +8,8 @@ import { writePortalAuditEvent } from '@libs/customer-portal/audit'
 import { grantsCol, getTenantPortalSettings, portalsCol, sessionsCol } from '@libs/customer-portal/admin'
 import { PORTAL_SESSION_COOKIE } from '@libs/customer-portal/settings'
 import { serializePortal, serializeSession } from '@libs/customer-portal/serialize'
-import { generateSecureToken, hashToken, hashesEqual } from '@libs/customer-portal/tokens'
+import { evaluateGrantExchange, evaluateSessionValidity } from '@libs/customer-portal/access-rules'
+import { generateSecureToken, hashToken } from '@libs/customer-portal/tokens'
 import type { AssuranceLevel, CustomerPortalRecord, CustomerPortalSession } from '@libs/customer-portal/types'
 
 export type PortalSessionContext = {
@@ -74,36 +75,49 @@ export async function exchangeGrantToken(input: { shortCode: string; grantToken:
 
   const { tenantId, portalId } = index
   const settings = await getTenantPortalSettings(tenantId)
-
-  if (!settings.enabled) {
-    throw Object.assign(new Error('This portal is currently unavailable'), { status: 403 })
-  }
-
   const portalSnap = await portalsCol(tenantId).doc(portalId).get()
-
-  if (!portalSnap.exists || portalSnap.data()?.status !== 'active') {
-    throw Object.assign(new Error('This portal is currently unavailable'), { status: 403 })
-  }
-
-  const portal = serializePortal(portalSnap.id, portalSnap.data()!, tenantId)
-  const grantHash = hashToken(input.grantToken)
   const grantsSnap = await grantsCol(tenantId)
     .where('portalId', '==', portalId)
     .where('status', '==', 'active')
     .limit(5)
     .get()
 
-  const grantDoc = grantsSnap.docs.find(doc => hashesEqual(String(doc.data().tokenHash || ''), grantHash))
+  const decision = evaluateGrantExchange({
+    shortCodeResolved: true,
+    tenantPortalEnabled: settings.enabled,
+    portalStatus: portalSnap.exists ? String(portalSnap.data()?.status || '') : null,
+    grants: grantsSnap.docs.map(doc => ({
+      id: doc.id,
+      tokenHash: String(doc.data().tokenHash || ''),
+      status: String(doc.data().status || ''),
+      expiresAt: doc.data().expiresAt ? String(doc.data().expiresAt) : null
+    })),
+    grantToken: input.grantToken
+  })
+
+  if (!decision.ok) {
+    if (decision.code === 'UNAUTHORIZED' || decision.code === 'EXPIRED') {
+      await writePortalAuditEvent({
+        tenantId,
+        portalId,
+        customerId: portalSnap.exists ? String(portalSnap.data()?.customerId || '') : null,
+        action: 'portal.grant_exchange_failed',
+        actor: { type: 'customer' },
+        metadata: { shortCode: input.shortCode, code: decision.code }
+      })
+    }
+
+    throw Object.assign(new Error(decision.error), { status: decision.status })
+  }
+
+  if (!portalSnap.exists) {
+    throw Object.assign(new Error('This portal is currently unavailable'), { status: 403 })
+  }
+
+  const portal = serializePortal(portalSnap.id, portalSnap.data()!, tenantId)
+  const grantDoc = grantsSnap.docs.find(doc => doc.id === decision.grantId)
 
   if (!grantDoc) {
-    await writePortalAuditEvent({
-      tenantId,
-      portalId,
-      customerId: portal.customerId,
-      action: 'portal.grant_exchange_failed',
-      actor: { type: 'customer' },
-      metadata: { shortCode: input.shortCode }
-    })
     throw Object.assign(new Error('Portal link is invalid or expired'), { status: 401 })
   }
 
@@ -167,25 +181,19 @@ async function hydrateSessionContext(
   data: DocumentData,
   rawSessionToken: string
 ): Promise<PortalSessionContext | null> {
-  if (data.revokedAt) return null
-
-  const now = Date.now()
-  const expiresAt = data.expiresAt ? new Date(String(data.expiresAt)).getTime() : 0
-  const idleExpiresAt = data.idleExpiresAt ? new Date(String(data.idleExpiresAt)).getTime() : 0
-
-  if ((expiresAt && expiresAt < now) || (idleExpiresAt && idleExpiresAt < now)) {
-    return null
-  }
-
   const portalSnap = await portalsCol(tenantId).doc(String(data.portalId)).get()
+  const settings = await getTenantPortalSettings(tenantId)
+  const validity = evaluateSessionValidity({
+    revokedAt: data.revokedAt ? String(data.revokedAt) : null,
+    expiresAt: data.expiresAt ? String(data.expiresAt) : null,
+    idleExpiresAt: data.idleExpiresAt ? String(data.idleExpiresAt) : null,
+    portalStatus: portalSnap.exists ? String(portalSnap.data()?.status || '') : null,
+    tenantPortalEnabled: settings.enabled
+  })
 
-  if (!portalSnap.exists || portalSnap.data()?.status !== 'active') {
+  if (!validity.valid || !portalSnap.exists) {
     return null
   }
-
-  const settings = await getTenantPortalSettings(tenantId)
-
-  if (!settings.enabled) return null
 
   const idleExpires = addMinutes(new Date(), settings.sessionIdleMinutes).toISOString()
 

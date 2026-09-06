@@ -1,6 +1,6 @@
 # Customer Portal — Testing Foundation
 
-**Status:** Started (spec §31)  
+**Status:** In progress (spec §31)  
 **Depends on:** Phases 1–6
 
 ## What shipped
@@ -13,12 +13,19 @@
   - Invoice / service status mappers
   - Assurance level step-up expiry
   - Customer/property authorization matching
-- Pure helpers extracted to `status-logic.ts`, `status-mappers.ts`, `authorization.ts`
+- Integration-style coverage for:
+  - Grant exchange decisions (disabled portal, rotated token, expired grant)
+  - Session validity (revoked / expired / idle / disabled)
+  - Cross-customer invoice isolation + tenant id checks
+  - Webhook payment authority (ignore non-portal purpose, pending unpaid, idempotent complete)
+  - Browser return is never authoritative
+- Pure helpers: `access-rules.ts`, `payment-rules.ts`, `status-logic.ts`, `status-mappers.ts`, `authorization.ts`
+- Runtime paths (`session.exchangeGrantToken`, `hydrateSession`, `reconcilePortalCheckoutSession`, invoice visibility) call the shared rules
 - CI runs `pnpm test` before typecheck/build
 
 ## Still deferred
 
-- Integration tests (grant exchange, webhook payment authority, cross-tenant isolation)
+- Firestore emulator / live API integration tests
 - End-to-end browser flows
 - Accessibility / security automated suites
 - Real SMS/email OTP provider tests

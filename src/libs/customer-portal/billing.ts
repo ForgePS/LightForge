@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { FieldValue, type DocumentData } from 'firebase-admin/firestore'
+import { FieldValue, type DocumentData, type DocumentReference } from 'firebase-admin/firestore'
 import type Stripe from 'stripe'
 
 import { adminDb } from '@libs/firebase/admin'
@@ -15,6 +15,8 @@ import {
 } from '@libs/customer-portal/context'
 import { publicPortalBaseUrl } from '@libs/customer-portal/serialize'
 import { mapPortalInvoiceStatus } from '@libs/customer-portal/status-mappers'
+import { planPortalCheckoutReconciliation } from '@libs/customer-portal/payment-rules'
+import { canAccessInvoiceRecord } from '@libs/customer-portal/access-rules'
 import type { PortalSessionContext } from '@libs/customer-portal/session'
 import { requireAssuranceLevel } from '@libs/customer-portal/verification'
 
@@ -126,11 +128,14 @@ async function findInvoice(ctx: PortalCustomerContext, publicNumber: string) {
 }
 
 function assertVisibleInvoice(data: DocumentData, ctx: PortalCustomerContext) {
-  if (!belongsToPortalCustomer(data, ctx)) {
-    throw Object.assign(new Error('Invoice not found'), { status: 404 })
-  }
-
-  if (String(data.status || '') === 'draft') {
+  if (
+    !canAccessInvoiceRecord({
+      record: data as Record<string, unknown>,
+      customerId: ctx.customerId,
+      customerName: ctx.customerName,
+      propertyNames: ctx.propertyNames
+    })
+  ) {
     throw Object.assign(new Error('Invoice not found'), { status: 404 })
   }
 }
@@ -393,43 +398,68 @@ async function foundRefTouchPending(tenantId: string, invoiceId: string) {
 }
 
 export async function reconcilePortalCheckoutSession(session: Stripe.Checkout.Session) {
-  if (session.metadata?.purpose !== 'customer_portal_invoice') {
-    return { handled: false as const }
-  }
+  const tenantId = session.metadata?.tenantId
+  const invoiceId = session.metadata?.invoiceId
+  const paymentsCol = tenantId ? adminDb.collection('tenants').doc(tenantId).collection('payments') : null
+  let existingStatus: string | null = null
+  let existing: { ref: DocumentReference; data: () => DocumentData } | null = null
+  let invoiceData: { amountCents: number; amountPaidCents: number; creditsCents?: number } | null = null
 
-  const tenantId = session.metadata.tenantId
-  const invoiceId = session.metadata.invoiceId
-  const invoiceNumber = session.metadata.invoiceNumber
-  const customerId = session.metadata.customerId
-  const amountCents = Number(session.metadata.amountCents || session.amount_total || 0)
-  const idempotencyKey = session.metadata.idempotencyKey || session.id
-
-  if (!tenantId || !invoiceId) {
-    return { handled: false as const }
-  }
-
-  const paymentsCol = adminDb.collection('tenants').doc(tenantId).collection('payments')
-  const existingBySession = await paymentsCol.where('stripeCheckoutSessionId', '==', session.id).limit(1).get()
-  const existingByKey = await paymentsCol.where('idempotencyKey', '==', idempotencyKey).limit(1).get()
-  const existing = !existingBySession.empty ? existingBySession.docs[0]! : !existingByKey.empty ? existingByKey.docs[0]! : null
-
-  if (existing?.data()?.status === 'completed') {
-    return { handled: true as const, duplicate: true }
-  }
-
-  if (session.payment_status !== 'paid' && session.status !== 'complete') {
-    return { handled: true as const, duplicate: false, pending: true }
-  }
-
-  const receiptUrl =
-    typeof session.invoice === 'string'
-      ? null
-      : session.payment_intent
-        ? null
+  if (paymentsCol && tenantId && invoiceId) {
+    const idempotencyKey = session.metadata?.idempotencyKey || session.id
+    const existingBySession = await paymentsCol.where('stripeCheckoutSessionId', '==', session.id).limit(1).get()
+    const existingByKey = await paymentsCol.where('idempotencyKey', '==', idempotencyKey).limit(1).get()
+    const existingDoc = !existingBySession.empty
+      ? existingBySession.docs[0]!
+      : !existingByKey.empty
+        ? existingByKey.docs[0]!
         : null
 
-  // Try to get charge receipt from payment intent
-  let finalReceiptUrl: string | null = receiptUrl
+    if (existingDoc) {
+      existing = { ref: existingDoc.ref, data: () => existingDoc.data() }
+      existingStatus = existingDoc.data()?.status ? String(existingDoc.data().status) : null
+    }
+
+    const invoiceSnap = await adminDb.collection('tenants').doc(tenantId).collection('invoices').doc(invoiceId).get()
+
+    if (invoiceSnap.exists) {
+      const invoice = invoiceSnap.data()!
+
+      invoiceData = {
+        amountCents: Number(invoice.amountCents || 0),
+        amountPaidCents: Number(invoice.amountPaidCents || 0),
+        creditsCents: Number(invoice.creditsCents || 0)
+      }
+    }
+  }
+
+  const plan = planPortalCheckoutReconciliation({
+    purpose: session.metadata?.purpose,
+    paymentStatus: session.payment_status,
+    checkoutStatus: session.status,
+    tenantId,
+    invoiceId,
+    invoiceNumber: session.metadata?.invoiceNumber,
+    customerId: session.metadata?.customerId,
+    amountCents: session.metadata?.amountCents ? Number(session.metadata.amountCents) : null,
+    amountTotal: session.amount_total,
+    idempotencyKey: session.metadata?.idempotencyKey,
+    checkoutSessionId: session.id,
+    existingPaymentStatus: existingStatus,
+    invoice: invoiceData
+  })
+
+  if (plan.action === 'ignore') return { handled: false as const }
+  if (plan.action === 'duplicate') return { handled: true as const, duplicate: true }
+  if (plan.action === 'pending') return { handled: true as const, duplicate: false, pending: true }
+
+  const invoiceNumber = plan.invoiceNumber
+  const customerId = plan.customerId
+  const amountCents = plan.amountCents
+  const idempotencyKey = plan.idempotencyKey
+  const paymentsWriteCol = adminDb.collection('tenants').doc(plan.tenantId).collection('payments')
+
+  let finalReceiptUrl: string | null = null
   const stripe = getStripe()
 
   if (stripe && typeof session.payment_intent === 'string') {
@@ -446,14 +476,14 @@ export async function reconcilePortalCheckoutSession(session: Stripe.Checkout.Se
   }
 
   const paidAt = new Date().toISOString()
-  const paymentRef = existing?.ref || paymentsCol.doc()
+  const paymentRef = existing?.ref || paymentsWriteCol.doc()
 
   await paymentRef.set(
     {
       publicNumber: existing?.data()?.publicNumber || `PAY-${invoiceNumber}-${paymentRef.id.slice(0, 6).toUpperCase()}`,
       customerId: customerId || existing?.data()?.customerId || null,
-      customerName: session.metadata.customerName || existing?.data()?.customerName || null,
-      invoiceId,
+      customerName: session.metadata?.customerName || existing?.data()?.customerName || null,
+      invoiceId: plan.invoiceId,
       invoiceNumber,
       amountCents,
       status: 'completed',
@@ -463,7 +493,7 @@ export async function reconcilePortalCheckoutSession(session: Stripe.Checkout.Se
       stripePaymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : null,
       receiptUrl: finalReceiptUrl,
       idempotencyKey,
-      portalId: session.metadata.portalId || null,
+      portalId: session.metadata?.portalId || null,
       paidAt,
       updatedAt: FieldValue.serverTimestamp(),
       createdAt: existing ? existing.data()?.createdAt || FieldValue.serverTimestamp() : FieldValue.serverTimestamp()
@@ -471,24 +501,16 @@ export async function reconcilePortalCheckoutSession(session: Stripe.Checkout.Se
     { merge: true }
   )
 
-  const invoiceRef = adminDb.collection('tenants').doc(tenantId).collection('invoices').doc(invoiceId)
+  const invoiceRef = adminDb.collection('tenants').doc(plan.tenantId).collection('invoices').doc(plan.invoiceId)
   const invoiceSnap = await invoiceRef.get()
 
   if (invoiceSnap.exists) {
-    const invoice = invoiceSnap.data()!
-    const previousPaid = Number(invoice.amountPaidCents || 0)
-    const nextPaid = previousPaid + amountCents
-    const total = Number(invoice.amountCents || 0)
-    const credits = Number(invoice.creditsCents || 0)
-    const remaining = Math.max(0, total - nextPaid - credits)
-    const nextStatus = remaining <= 0 ? 'paid' : 'partially_paid'
-
     await invoiceRef.set(
       {
-        amountPaidCents: nextPaid,
-        status: nextStatus,
-        paidAt: remaining <= 0 ? paidAt : invoice.paidAt || null,
-        receiptUrl: finalReceiptUrl || invoice.receiptUrl || null,
+        amountPaidCents: plan.nextInvoice.amountPaidCents,
+        status: plan.nextInvoice.status,
+        paidAt: plan.nextInvoice.remainingCents <= 0 ? paidAt : invoiceSnap.data()?.paidAt || null,
+        receiptUrl: finalReceiptUrl || invoiceSnap.data()?.receiptUrl || null,
         paymentPendingAt: null,
         updatedAt: FieldValue.serverTimestamp()
       },
@@ -498,7 +520,7 @@ export async function reconcilePortalCheckoutSession(session: Stripe.Checkout.Se
 
   await adminDb
     .collection('tenants')
-    .doc(tenantId)
+    .doc(plan.tenantId)
     .collection('messages')
     .add({
       to: session.customer_details?.email || session.customer_email || 'customer',
@@ -508,19 +530,19 @@ export async function reconcilePortalCheckoutSession(session: Stripe.Checkout.Se
       status: 'sent',
       source: 'customer_portal_payment',
       customerId: customerId || null,
-      customerName: session.metadata.customerName || null,
+      customerName: session.metadata?.customerName || null,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp()
     })
 
   await writePortalAuditEvent({
-    tenantId,
-    portalId: session.metadata.portalId || null,
+    tenantId: plan.tenantId,
+    portalId: session.metadata?.portalId || null,
     customerId: customerId || null,
     action: 'portal.payment_confirmed',
     actor: { type: 'system' },
     metadata: {
-      invoiceId,
+      invoiceId: plan.invoiceId,
       invoiceNumber,
       paymentId: paymentRef.id,
       amountCents,
