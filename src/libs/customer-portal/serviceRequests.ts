@@ -11,6 +11,7 @@ import {
   loadPortalCustomerContext,
   type PortalCustomerContext
 } from '@libs/customer-portal/context'
+import { mapPortalServiceStatus } from '@libs/customer-portal/status-mappers'
 import type { PortalSessionContext } from '@libs/customer-portal/session'
 
 export const PROBLEM_TYPES = [
@@ -63,32 +64,7 @@ export type PortalServiceRequest = {
 }
 
 function mapCustomerStatus(internal: string): PortalServiceStatus {
-  switch (internal) {
-    case 'open':
-    case 'new':
-      return 'Submitted'
-    case 'accepted':
-    case 'received':
-      return 'Received'
-    case 'scheduled':
-    case 'assigned':
-      return 'Scheduled'
-    case 'en_route':
-      return 'Technician En Route'
-    case 'in_progress':
-      return 'In Progress'
-    case 'resolved':
-    case 'complete':
-    case 'completed':
-      return 'Completed'
-    case 'waiting_on_customer':
-      return 'Action Needed'
-    case 'canceled':
-    case 'cancelled':
-      return 'Canceled'
-    default:
-      return 'Received'
-  }
+  return mapPortalServiceStatus(internal) as PortalServiceStatus
 }
 
 function serializeRequest(data: DocumentData): PortalServiceRequest {

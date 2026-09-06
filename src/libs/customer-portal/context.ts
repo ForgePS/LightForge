@@ -3,6 +3,7 @@ import 'server-only'
 import type { DocumentData } from 'firebase-admin/firestore'
 
 import { adminDb } from '@libs/firebase/admin'
+import { belongsToPortalCustomer } from '@libs/customer-portal/authorization'
 import type { CustomerPortalRecord } from '@libs/customer-portal/types'
 import type { PortalSessionContext } from '@libs/customer-portal/session'
 
@@ -79,24 +80,4 @@ export async function loadPortalCustomerContext(session: PortalSessionContext): 
   }
 }
 
-export function belongsToPortalCustomer(
-  record: DocumentData,
-  ctx: PortalCustomerContext,
-  options?: { propertyField?: string; customerNameField?: string; customerIdField?: string }
-) {
-  const propertyField = options?.propertyField || 'propertyName'
-  const customerNameField = options?.customerNameField || 'customerName'
-  const customerIdField = options?.customerIdField || 'customerId'
-
-  if (record[customerIdField] && String(record[customerIdField]) === ctx.customerId) {
-    return true
-  }
-
-  if (record[customerNameField] && String(record[customerNameField]) === ctx.customerName) {
-    return true
-  }
-
-  const prop = record[propertyField]
-
-  return Boolean(prop && ctx.propertyNames.includes(String(prop)))
-}
+export { belongsToPortalCustomer }

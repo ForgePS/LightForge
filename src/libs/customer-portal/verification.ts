@@ -13,6 +13,7 @@ import {
   type PortalSessionContext
 } from '@libs/customer-portal/session'
 import { generateSecureToken, hashToken, hashesEqual } from '@libs/customer-portal/tokens'
+import { effectiveAssuranceLevel } from '@libs/customer-portal/status-mappers'
 import type { AssuranceLevel } from '@libs/customer-portal/types'
 
 function maskDestination(value: string, channel: 'email' | 'sms') {
@@ -40,11 +41,13 @@ export async function requireAssuranceLevel(minLevel: AssuranceLevel): Promise<P
   const sessionSnap = await sessionsCol(ctx.tenantId).doc(ctx.session.id).get()
   const data = sessionSnap.data() || {}
   const level = Number(data.assuranceLevel || ctx.session.assuranceLevel || 1)
-  const stepUpExpires = data.assuranceLevelExpiresAt ? new Date(String(data.assuranceLevelExpiresAt)).getTime() : 0
-  const stepUpValid = !stepUpExpires || stepUpExpires > Date.now()
-  const effective = minLevel >= 3 ? (stepUpValid ? level : Math.min(level, 2)) : level
+  const { effective, allowed } = effectiveAssuranceLevel({
+    sessionLevel: level,
+    minLevel,
+    assuranceLevelExpiresAt: data.assuranceLevelExpiresAt ? String(data.assuranceLevelExpiresAt) : null
+  })
 
-  if (effective < minLevel) {
+  if (!allowed) {
     throw Object.assign(new Error('Additional verification is required'), {
       status: 403,
       code: 'STEP_UP_REQUIRED',

@@ -14,6 +14,7 @@ import {
   type PortalCustomerContext
 } from '@libs/customer-portal/context'
 import { publicPortalBaseUrl } from '@libs/customer-portal/serialize'
+import { mapPortalInvoiceStatus } from '@libs/customer-portal/status-mappers'
 import type { PortalSessionContext } from '@libs/customer-portal/session'
 import { requireAssuranceLevel } from '@libs/customer-portal/verification'
 
@@ -55,17 +56,6 @@ function today() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function mapCustomerStatus(status: string, dueDate: string | null, amountDueCents: number) {
-  if (status === 'paid') return 'Paid'
-  if (status === 'void' || status === 'voided') return 'Voided'
-  if (status === 'refunded') return 'Refunded'
-  if (status === 'partially_paid') return 'Partially paid'
-  if (amountDueCents > 0 && dueDate && dueDate < today()) return 'Past due'
-  if (status === 'sent' || status === 'open') return 'Open'
-
-  return 'Unavailable'
-}
-
 function amountPaid(data: DocumentData) {
   return Number(data.amountPaidCents || 0)
 }
@@ -92,7 +82,7 @@ function summarize(id: string, data: DocumentData): PortalInvoiceSummary {
     publicNumber: String(data.number || data.publicNumber || id),
     title: data.title ? String(data.title) : data.jobTitle ? String(data.jobTitle) : null,
     status,
-    customerStatus: mapCustomerStatus(status, dueDate, amountDueCents),
+    customerStatus: mapPortalInvoiceStatus(status, dueDate, amountDueCents),
     amountCents,
     amountPaidCents,
     amountDueCents,

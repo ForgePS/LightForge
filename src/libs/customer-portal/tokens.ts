@@ -1,5 +1,3 @@
-import 'server-only'
-
 import { createHash, randomBytes, timingSafeEqual } from 'crypto'
 
 const SHORT_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
