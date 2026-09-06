@@ -13,6 +13,7 @@
     "build:icons": "tsx src/assets/iconify-icons/bundle-icons-css.ts",
     "postinstall": "npm run build:icons",
     "seed": "tsx scripts/seed-tenants.ts",
+    "backfill:portal-ids": "tsx scripts/backfill-portal-ids.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "firebase:rules": "firebase deploy --only firestore:rules --project lightforge-2cf3b",

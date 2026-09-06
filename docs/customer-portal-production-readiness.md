@@ -12,6 +12,8 @@
 - Debug OTP codes only when `ALLOW_PORTAL_DEBUG_OTP=true` or local development (never by default in production)
 - Production without a provider returns `503 OTP_PROVIDER_MISSING` instead of leaking codes
 - Payment webhook remains authoritative; unit/integration-style tests cover grant + pay isolation
+- Distributed rate limits (Firestore) on grant exchange, OTP send/confirm, and pay-create
+- Backfill script: `pnpm backfill:portal-ids` (supports `--dry-run` and `--tenant=<id>`)
 
 ## Required before real customers
 
@@ -51,7 +53,14 @@ Include `checkout.session.completed` and async payment events.
 
 ### 3. Data backfill
 
-Re-save key CRM records (or run a one-off backfill) so invoices, jobs, proposals, properties have `customerId` / `propertyId`. Until then legacy name matching still applies for rows without IDs.
+```bash
+pnpm backfill:portal-ids --dry-run
+pnpm backfill:portal-ids
+# or one tenant:
+pnpm backfill:portal-ids --tenant=<tenantId>
+```
+
+This fills missing `customerId` / `propertyId` from names. Prefer re-saving records in CRM afterward so dual-write stays current.
 
 ### 4. Soft launch
 
