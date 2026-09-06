@@ -132,6 +132,9 @@ export type PortalHomeDto = {
   showPoweredBy: boolean
   supportPhone: string | null
   supportEmail: string | null
+  accountType: string
+  properties: Array<{ id: string; name: string; address: string; selected: boolean }>
+  canSwitchProperties: boolean
 }
 
 export type PortalAdminSummary = {

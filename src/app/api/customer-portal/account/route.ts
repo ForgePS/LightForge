@@ -6,11 +6,32 @@ import {
   submitPortalReview,
   updateAutopayPreference
 } from '@libs/customer-portal/enhancements'
+import {
+  createPortalPaymentMethodSetup,
+  reconcilePortalSetupSession,
+  removePortalSavedPaymentMethod
+} from '@libs/customer-portal/billing'
+import { getStripe, isStripeConfigured } from '@libs/billing/stripe'
 import { requirePortalSession } from '@libs/customer-portal/session'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await requirePortalSession()
+    const url = new URL(request.url)
+    const setupSessionId = url.searchParams.get('session_id')
+
+    if (setupSessionId && isStripeConfigured()) {
+      try {
+        const checkout = await getStripe()!.checkout.sessions.retrieve(setupSessionId)
+
+        if (checkout.metadata?.purpose === 'customer_portal_setup') {
+          await reconcilePortalSetupSession(checkout)
+        }
+      } catch {
+        // fall through to enhancements
+      }
+    }
+
     const data = await getPortalEnhancements(session)
 
     return NextResponse.json({ ok: true, ...data })
@@ -53,6 +74,18 @@ export async function POST(request: Request) {
       })
 
       return NextResponse.json({ ok: true, ...data })
+    }
+
+    if (action === 'setup_payment_method') {
+      const result = await createPortalPaymentMethodSetup(session)
+
+      return NextResponse.json({ ok: true, ...result })
+    }
+
+    if (action === 'remove_payment_method') {
+      const result = await removePortalSavedPaymentMethod(session)
+
+      return NextResponse.json({ ok: true, ...result })
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })

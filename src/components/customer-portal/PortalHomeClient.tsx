@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
@@ -9,7 +10,9 @@ import CardContent from '@mui/material/CardContent'
 import Alert from '@mui/material/Alert'
 import Chip from '@mui/material/Chip'
 import Divider from '@mui/material/Divider'
+import MenuItem from '@mui/material/MenuItem'
 
+import CustomTextField from '@core/components/mui/TextField'
 import type { PortalHomeDto } from '@libs/customer-portal/types'
 
 function formatMoney(cents: number) {
@@ -30,15 +33,41 @@ const quickLinks: Array<{ key: keyof PortalHomeDto['features']; label: string; h
 ]
 
 export default function PortalHomeClient({ home, error }: { home: PortalHomeDto | null; error?: string }) {
+  const [properties, setProperties] = useState(home?.properties || [])
+  const [switching, setSwitching] = useState(false)
+  const [switchError, setSwitchError] = useState<string | null>(null)
+
   if (!home) {
     return (
-    <Stack className='min-bs-screen items-center justify-center p-6' spacing={3} maxWidth={480} mx='auto'>
-      <Alert severity='error'>{error || 'Unable to load portal'}</Alert>
-    </Stack>
+      <Stack className='min-bs-screen items-center justify-center p-6' spacing={3} maxWidth={480} mx='auto'>
+        <Alert severity='error'>{error || 'Unable to load portal'}</Alert>
+      </Stack>
     )
   }
 
   const accent = home.primaryColor || '#0F3D2E'
+  const isCommercial = home.accountType === 'commercial' || home.accountType.includes('hoa')
+
+  const switchProperty = async (propertyId: string) => {
+    setSwitching(true)
+    setSwitchError(null)
+
+    try {
+      const res = await fetch('/api/customer-portal/properties', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ propertyId })
+      })
+      const json = await res.json()
+
+      if (!res.ok) throw new Error(json.error || 'Unable to switch property')
+      setProperties(json.properties)
+      window.location.reload()
+    } catch (err) {
+      setSwitchError(err instanceof Error ? err.message : 'Unable to switch property')
+      setSwitching(false)
+    }
+  }
 
   return (
     <Stack
@@ -67,6 +96,7 @@ export default function PortalHomeClient({ home, error }: { home: PortalHomeDto 
         <div>
           <Typography variant='overline' color='text.secondary'>
             {home.portalName}
+            {isCommercial ? ' · Commercial' : ''}
           </Typography>
           <Typography variant='h4' fontWeight={700}>
             {home.customerGreeting}
@@ -80,6 +110,34 @@ export default function PortalHomeClient({ home, error }: { home: PortalHomeDto 
             {home.seasonLabel}
           </Typography>
         </div>
+
+        {home.canSwitchProperties && properties.length > 1 && (
+          <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+            <CardContent>
+              <Stack spacing={1.5}>
+                <Typography variant='subtitle2' color='text.secondary'>
+                  Active property
+                </Typography>
+                {switchError && <Alert severity='error'>{switchError}</Alert>}
+                <CustomTextField
+                  select
+                  fullWidth
+                  size='small'
+                  value={properties.find(p => p.selected)?.id || ''}
+                  disabled={switching}
+                  onChange={e => void switchProperty(e.target.value)}
+                >
+                  {properties.map(property => (
+                    <MenuItem key={property.id} value={property.id}>
+                      {property.name}
+                      {property.address ? ` — ${property.address}` : ''}
+                    </MenuItem>
+                  ))}
+                </CustomTextField>
+              </Stack>
+            </CardContent>
+          </Card>
+        )}
 
         <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
           <CardContent>

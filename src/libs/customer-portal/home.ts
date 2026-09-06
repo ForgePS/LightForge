@@ -212,30 +212,37 @@ function primaryActionFor(
 async function loadRelated(tenantId: string, customerName: string, customerId: string, propertyId: string | null) {
   const tenantRef = adminDb.collection('tenants').doc(tenantId)
 
-  const [proposalsSnap, jobsSnap, issuesSnap, invoicesSnap, rebookingSnap, propertySnap] = await Promise.all([
+  const [proposalsSnap, jobsSnap, issuesSnap, invoicesSnap, rebookingSnap, propertiesSnap] = await Promise.all([
     tenantRef.collection('proposals').where('customerName', '==', customerName).limit(20).get().catch(() => null),
     tenantRef.collection('jobs').limit(100).get(),
     tenantRef.collection('serviceIssues').limit(100).get(),
     tenantRef.collection('invoices').where('customerName', '==', customerName).limit(20).get().catch(() => null),
     tenantRef.collection('rebookingRequests').where('customerName', '==', customerName).limit(10).get().catch(() => null),
-    propertyId ? tenantRef.collection('properties').doc(propertyId).get() : Promise.resolve(null)
+    tenantRef.collection('properties').where('customerName', '==', customerName).limit(20).get()
   ])
 
-  const propertiesByCustomer = propertySnap?.exists
-    ? [propertySnap.data()!]
-    : (
-        await tenantRef.collection('properties').where('customerName', '==', customerName).limit(5).get()
-      ).docs.map(d => d.data())
-
-  const propertyNames = new Set(propertiesByCustomer.map(p => String(p.name || '')))
+  const properties = propertiesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }) as DocumentData & { id: string })
+  const selected =
+    (propertyId ? properties.find(p => p.id === propertyId) : null) || properties[0] || null
+  const propertyNames = new Set(properties.map(p => String(p.name || '')))
 
   const jobs = jobsSnap.docs
     .map(d => d.data())
-    .filter(j => propertyNames.has(String(j.propertyName || '')) || j.customerId === customerId)
+    .filter(
+      j =>
+        j.customerId === customerId ||
+        propertyNames.has(String(j.propertyName || '')) ||
+        String(j.customerName || '') === customerName
+    )
 
   const issues = issuesSnap.docs
     .map(d => d.data())
-    .filter(i => propertyNames.has(String(i.propertyName || '')) || i.customerId === customerId)
+    .filter(
+      i =>
+        i.customerId === customerId ||
+        propertyNames.has(String(i.propertyName || '')) ||
+        String(i.customerName || '') === customerName
+    )
 
   return {
     proposals: proposalsSnap ? proposalsSnap.docs.map(d => d.data()) : [],
@@ -243,7 +250,8 @@ async function loadRelated(tenantId: string, customerName: string, customerId: s
     issues,
     invoices: invoicesSnap ? invoicesSnap.docs.map(d => d.data()) : [],
     rebooking: rebookingSnap ? rebookingSnap.docs.map(d => d.data()) : [],
-    property: propertiesByCustomer[0] || null
+    property: selected,
+    properties
   }
 }
 
@@ -300,6 +308,21 @@ export async function buildPortalHomeDto(tenantId: string, portal: CustomerPorta
     })
   }
 
+  const accountType = String(customer.type || 'residential').toLowerCase()
+  const isCommercial = accountType === 'commercial' || accountType.includes('hoa')
+  const selectedPropertyId =
+    portal.primaryPropertyId || (related.property ? String((related.property as DocumentData & { id?: string }).id || '') : '')
+  const properties = related.properties.map(property => ({
+    id: String(property.id),
+    name: String(property.name || 'Property'),
+    address: [property.address, property.city, property.state].filter(Boolean).join(', '),
+    selected: selectedPropertyId ? property.id === selectedPropertyId : false
+  }))
+
+  if (properties.length > 0 && !properties.some(p => p.selected)) {
+    properties[0]!.selected = true
+  }
+
   return {
     contractorName: contractorName || fallbackName,
     portalName:
@@ -310,7 +333,9 @@ export async function buildPortalHomeDto(tenantId: string, portal: CustomerPorta
     primaryColor: branding.primaryColor || null,
     accentColor: branding.accentColor || null,
     seasonLabel: seasonLabel(),
-    customerGreeting: `Welcome back, ${greetingName(customer)}`,
+    customerGreeting: isCommercial
+      ? `Welcome, ${customerName || 'team'}`
+      : `Welcome back, ${greetingName(customer)}`,
     propertySummary: propertyLabel(related.property),
     status: {
       label: derived.label,
@@ -341,6 +366,9 @@ export async function buildPortalHomeDto(tenantId: string, portal: CustomerPorta
     },
     showPoweredBy: settings.showPoweredBy,
     supportPhone: settings.supportPhone,
-    supportEmail: settings.supportEmail || (typeof general.supportEmail === 'string' ? general.supportEmail : null)
+    supportEmail: settings.supportEmail || (typeof general.supportEmail === 'string' ? general.supportEmail : null),
+    accountType,
+    properties,
+    canSwitchProperties: Boolean(settings.multipleProperties && properties.length > 1)
   }
 }

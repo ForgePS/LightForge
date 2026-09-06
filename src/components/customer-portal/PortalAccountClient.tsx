@@ -30,6 +30,8 @@ type AccountPayload = {
   weatherNotices: Array<{ title: string; notice: string; date: string | null }>
   billingPreferences: {
     savedPaymentMethodOnFile: boolean
+    paymentMethodBrand: string | null
+    paymentMethodLast4: string | null
     autopayEnabled: boolean
     autopayConsentAt: string | null
   }
@@ -84,21 +86,32 @@ export default function PortalAccountClient({
 
       if (!res.ok) throw new Error(json.error || 'Request failed')
 
-      if (action === 'autopay') {
-        setData(prev =>
-          prev
-            ? {
-                ...prev,
-                billingPreferences: json.billingPreferences,
-                features: json.features,
-                reviews: json.reviews,
-                referrals: json.referrals,
-                arrivals: json.arrivals,
-                weatherNotices: json.weatherNotices
-              }
-            : prev
+      if (action === 'setup_payment_method' && json.checkoutUrl) {
+        window.location.href = json.checkoutUrl
+
+        return
+      }
+
+      if (action === 'autopay' || action === 'remove_payment_method') {
+        const refresh = await fetch('/api/customer-portal/account')
+        const refreshed = await refresh.json()
+
+        if (refresh.ok) {
+          setData(prev => ({
+            ...(prev as AccountPayload),
+            ...refreshed,
+            properties: prev?.properties || [],
+            canSwitch: prev?.canSwitch || false
+          }))
+        }
+
+        setMessage(
+          action === 'remove_payment_method'
+            ? 'Card removed'
+            : body.enabled
+              ? 'Autopay preference saved'
+              : 'Autopay turned off'
         )
-        setMessage(body.enabled ? 'Autopay preference saved' : 'Autopay turned off')
       } else {
         setMessage('Saved')
         const refresh = await fetch('/api/customer-portal/account')
@@ -252,14 +265,59 @@ export default function PortalAccountClient({
         </Card>
       )}
 
+      {data.features.savedPaymentMethods && (
+        <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+          <CardContent>
+            <Stack spacing={2}>
+              <Typography variant='h6'>Saved payment method</Typography>
+              {data.billingPreferences.savedPaymentMethodOnFile ? (
+                <Alert severity='info'>
+                  Card on file
+                  {data.billingPreferences.paymentMethodBrand
+                    ? `: ${data.billingPreferences.paymentMethodBrand}`
+                    : ''}
+                  {data.billingPreferences.paymentMethodLast4
+                    ? ` ······${data.billingPreferences.paymentMethodLast4}`
+                    : ''}
+                </Alert>
+              ) : (
+                <Typography variant='body2' color='text.secondary'>
+                  Save a card securely with Stripe. LightForge only stores a processor token.
+                </Typography>
+              )}
+              {needsStepUp && <PortalVerificationPanel purpose='payment' onVerified={() => setNeedsStepUp(false)} />}
+              <Stack direction='row' gap={1} flexWrap='wrap'>
+                <Button
+                  variant='contained'
+                  disabled={loading}
+                  onClick={() => void run('setup_payment_method', {})}
+                >
+                  {data.billingPreferences.savedPaymentMethodOnFile ? 'Replace card' : 'Add card'}
+                </Button>
+                {data.billingPreferences.savedPaymentMethodOnFile && (
+                  <Button
+                    variant='text'
+                    color='error'
+                    disabled={loading}
+                    onClick={() => void run('remove_payment_method', {})}
+                  >
+                    Remove card
+                  </Button>
+                )}
+              </Stack>
+            </Stack>
+          </CardContent>
+        </Card>
+      )}
+
       {data.features.autopay && (
         <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
           <CardContent>
             <Stack spacing={2}>
               <Typography variant='h6'>Autopay</Typography>
               <Typography variant='body2' color='text.secondary'>
-                Autopay uses processor tokens only. You can revoke anytime. Card capture for saved methods is enabled
-                when your contractor completes Stripe payment-method setup.
+                Autopay uses your saved card token only. You can revoke anytime. Open invoices are not charged until
+                your contractor runs autopay processing.
               </Typography>
               {needsStepUp && <PortalVerificationPanel purpose='payment' onVerified={() => setNeedsStepUp(false)} />}
               <FormControlLabel

@@ -55,6 +55,15 @@
         preferredArrival: 'Afternoon preferred'
       },
       {
+        name: 'Maple Grove Entrances',
+        customerName: 'Maple Grove HOA',
+        address: '1 Maple Grove Dr',
+        city: 'Greenville',
+        state: 'SC',
+        zip: '29607',
+        serviceNotes: 'Two entrance monuments; traffic control required'
+      },
+      {
         name: 'Maple Grove Clubhouse',
         customerName: 'Maple Grove HOA',
         address: '88 Maple Grove Dr',
@@ -323,8 +332,9 @@
         title: 'Anderson Mid-season Service',
         propertyName: 'Anderson Main Home',
         type: 'service',
-        status: 'lead',
+        status: 'weather_delay',
         scheduledDate: '2026-12-20',
+        weatherNotice: 'High winds expected — visit delayed until conditions are safe.',
         crewNotes: 'Check failed sections after storms'
       }
     ],

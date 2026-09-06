@@ -68,7 +68,7 @@ export async function getPortalEnhancements(session: PortalSessionContext) {
       date: job.scheduledDate ? String(job.scheduledDate) : null
     }))
 
-  // Autopay / saved methods — consent records only in Phase 6
+  // Autopay / saved methods — processor tokens only
   const billingPrefs = await adminDb
     .collection('tenants')
     .doc(ctx.tenantId)
@@ -92,6 +92,8 @@ export async function getPortalEnhancements(session: PortalSessionContext) {
     weatherNotices,
     billingPreferences: {
       savedPaymentMethodOnFile: Boolean(prefs.stripePaymentMethodId),
+      paymentMethodBrand: prefs.paymentMethodBrand ? String(prefs.paymentMethodBrand) : null,
+      paymentMethodLast4: prefs.paymentMethodLast4 ? String(prefs.paymentMethodLast4) : null,
       autopayEnabled: Boolean(prefs.autopayEnabled),
       autopayConsentAt: asIso(prefs.autopayConsentAt)
     }

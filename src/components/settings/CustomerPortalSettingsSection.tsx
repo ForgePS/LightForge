@@ -32,7 +32,7 @@ const featureToggles: Array<{ key: keyof CustomerPortalFeatureSettings; label: s
   { key: 'referrals', label: 'Referrals' },
   { key: 'reviews', label: 'Reviews' },
   { key: 'technicianArrivalStatus', label: 'Technician Arrival Status' },
-  { key: 'savedPaymentMethods', label: 'Saved Payment Methods (stub)' },
+  { key: 'savedPaymentMethods', label: 'Saved Payment Methods' },
   { key: 'autopay', label: 'Autopay Consent' },
   { key: 'showPoweredBy', label: 'Show “Powered by LightForge”' }
 ]

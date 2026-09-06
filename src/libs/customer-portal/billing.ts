@@ -304,11 +304,13 @@ export async function createPortalInvoiceCheckout(
   const stripe = getStripe()!
   const appUrl = publicPortalBaseUrl()
   const customerEmail = typeof ctx.customer.email === 'string' ? ctx.customer.email : undefined
+  const stripeCustomerId =
+    typeof ctx.customer.stripeCustomerId === 'string' ? ctx.customer.stripeCustomerId : undefined
 
   const checkout = await stripe.checkout.sessions.create(
     {
       mode: 'payment',
-      customer_email: customerEmail,
+      ...(stripeCustomerId ? { customer: stripeCustomerId } : { customer_email: customerEmail }),
       line_items: [
         {
           quantity: 1,
@@ -568,4 +570,190 @@ export async function getPortalPaymentStatus(
     processing: refreshed.amountDueCents > 0 && detail.canPay,
     paid: refreshed.amountDueCents <= 0 || refreshed.status === 'paid'
   }
+}
+
+export async function createPortalPaymentMethodSetup(session: PortalSessionContext) {
+  const settings = await getTenantPortalSettings(session.tenantId)
+
+  if (!settings.savedPaymentMethods) {
+    throw Object.assign(new Error('Saved payment methods are not enabled'), { status: 403 })
+  }
+
+  if (!isStripeConfigured()) {
+    throw Object.assign(new Error('Card setup is temporarily unavailable'), {
+      status: 503,
+      code: 'STRIPE_NOT_CONFIGURED'
+    })
+  }
+
+  await requireAssuranceLevel(3)
+
+  const ctx = await loadPortalCustomerContext(session)
+  const stripe = getStripe()!
+  const appUrl = publicPortalBaseUrl()
+  const customerEmail = typeof ctx.customer.email === 'string' ? ctx.customer.email : undefined
+  let stripeCustomerId =
+    typeof ctx.customer.stripeCustomerId === 'string' ? ctx.customer.stripeCustomerId : null
+
+  if (!stripeCustomerId) {
+    const created = await stripe.customers.create({
+      email: customerEmail,
+      name: ctx.customerName || undefined,
+      metadata: {
+        tenantId: ctx.tenantId,
+        customerId: ctx.customerId,
+        source: 'customer_portal'
+      }
+    })
+
+    stripeCustomerId = created.id
+    await adminDb
+      .collection('tenants')
+      .doc(ctx.tenantId)
+      .collection('customers')
+      .doc(ctx.customerId)
+      .set({ stripeCustomerId, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+  }
+
+  const checkout = await stripe.checkout.sessions.create({
+    mode: 'setup',
+    customer: stripeCustomerId,
+    payment_method_types: ['card'],
+    success_url: `${appUrl}/portal/account?setup=success&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${appUrl}/portal/account?setup=canceled`,
+    metadata: {
+      purpose: 'customer_portal_setup',
+      tenantId: ctx.tenantId,
+      portalId: session.portal.id,
+      customerId: ctx.customerId
+    }
+  })
+
+  await writePortalAuditEvent({
+    tenantId: ctx.tenantId,
+    portalId: session.portal.id,
+    customerId: ctx.customerId,
+    action: 'portal.payment_method_setup_started',
+    actor: { type: 'customer' },
+    metadata: { stripeCheckoutSessionId: checkout.id }
+  })
+
+  return { checkoutUrl: checkout.url, sessionId: checkout.id }
+}
+
+export async function reconcilePortalSetupSession(session: Stripe.Checkout.Session) {
+  if (session.metadata?.purpose !== 'customer_portal_setup') {
+    return { handled: false as const }
+  }
+
+  const tenantId = session.metadata.tenantId
+  const customerId = session.metadata.customerId
+
+  if (!tenantId || !customerId) return { handled: false as const }
+
+  const stripe = getStripe()
+
+  if (!stripe) return { handled: false as const }
+
+  let paymentMethodId: string | null = null
+  let brand: string | null = null
+  let last4: string | null = null
+
+  if (typeof session.setup_intent === 'string') {
+    const setupIntent = await stripe.setupIntents.retrieve(session.setup_intent, {
+      expand: ['payment_method']
+    })
+    const pm = setupIntent.payment_method
+
+    if (pm && typeof pm !== 'string') {
+      paymentMethodId = pm.id
+      brand = pm.card?.brand || null
+      last4 = pm.card?.last4 || null
+    } else if (typeof pm === 'string') {
+      paymentMethodId = pm
+    }
+  }
+
+  if (!paymentMethodId) {
+    return { handled: true as const, pending: true }
+  }
+
+  await adminDb
+    .collection('tenants')
+    .doc(tenantId)
+    .collection('customers')
+    .doc(customerId)
+    .set(
+      {
+        stripeCustomerId: typeof session.customer === 'string' ? session.customer : null,
+        stripePaymentMethodId: paymentMethodId,
+        paymentMethodBrand: brand,
+        paymentMethodLast4: last4,
+        paymentMethodSavedAt: new Date().toISOString(),
+        updatedAt: FieldValue.serverTimestamp()
+      },
+      { merge: true }
+    )
+
+  await writePortalAuditEvent({
+    tenantId,
+    portalId: session.metadata.portalId || null,
+    customerId,
+    action: 'portal.payment_method_saved',
+    actor: { type: 'customer' },
+    metadata: { paymentMethodId, brand, last4 }
+  })
+
+  return { handled: true as const, pending: false }
+}
+
+export async function removePortalSavedPaymentMethod(session: PortalSessionContext) {
+  const settings = await getTenantPortalSettings(session.tenantId)
+
+  if (!settings.savedPaymentMethods) {
+    throw Object.assign(new Error('Saved payment methods are not enabled'), { status: 403 })
+  }
+
+  await requireAssuranceLevel(3)
+
+  const ctx = await loadPortalCustomerContext(session)
+  const paymentMethodId =
+    typeof ctx.customer.stripePaymentMethodId === 'string' ? ctx.customer.stripePaymentMethodId : null
+
+  if (isStripeConfigured() && paymentMethodId) {
+    try {
+      await getStripe()!.paymentMethods.detach(paymentMethodId)
+    } catch {
+      // still clear local token if Stripe detach fails (already removed)
+    }
+  }
+
+  await adminDb
+    .collection('tenants')
+    .doc(ctx.tenantId)
+    .collection('customers')
+    .doc(ctx.customerId)
+    .set(
+      {
+        stripePaymentMethodId: null,
+        paymentMethodBrand: null,
+        paymentMethodLast4: null,
+        paymentMethodRemovedAt: new Date().toISOString(),
+        autopayEnabled: false,
+        autopayRevokedAt: new Date().toISOString(),
+        updatedAt: FieldValue.serverTimestamp()
+      },
+      { merge: true }
+    )
+
+  await writePortalAuditEvent({
+    tenantId: ctx.tenantId,
+    portalId: session.portal.id,
+    customerId: ctx.customerId,
+    action: 'portal.payment_method_removed',
+    actor: { type: 'customer' },
+    metadata: {}
+  })
+
+  return { removed: true as const }
 }

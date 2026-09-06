@@ -31,13 +31,24 @@ firebase apphosting:secrets:grantaccess STRIPE_SECRET_KEY --backend lightforge-a
 
 ## Roll out
 
-After GitHub is connected:
+### Preferred (after GitHub is connected)
 
 ```bash
 firebase apphosting:rollouts:create lightforge-app --git-branch main --project lightforge-2cf3b
 ```
 
 Or push to `main` if automatic rollouts are enabled.
+
+### Local source (current backend has no connected repository)
+
+Until App Hosting is linked to GitHub, deploy from the local tree:
+
+```bash
+git push origin main
+firebase deploy --only apphosting,firestore --project lightforge-2cf3b --non-interactive
+```
+
+Track rollouts in [Firebase Console → App Hosting](https://console.firebase.google.com/project/lightforge-2cf3b/apphosting).
 
 ## Local vs production Admin SDK
 

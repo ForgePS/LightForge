@@ -4,7 +4,7 @@ import type Stripe from 'stripe'
 
 import { adminDb } from '@libs/firebase/admin'
 import { getStripe, subscriptionFromStripe } from '@libs/billing/stripe'
-import { reconcilePortalCheckoutSession } from '@libs/customer-portal/billing'
+import { reconcilePortalCheckoutSession, reconcilePortalSetupSession } from '@libs/customer-portal/billing'
 import type { SubscriptionPlanId, SubscriptionStatus } from '@libs/firebase/types'
 
 export async function POST(request: Request) {
@@ -37,6 +37,8 @@ export async function POST(request: Request) {
 
       if (session.metadata?.purpose === 'customer_portal_invoice') {
         await reconcilePortalCheckoutSession(session)
+      } else if (session.metadata?.purpose === 'customer_portal_setup') {
+        await reconcilePortalSetupSession(session)
       } else if (event.type === 'checkout.session.completed') {
         const tenantId = session.metadata?.tenantId
         const planId = (session.metadata?.planId || 'starter') as SubscriptionPlanId

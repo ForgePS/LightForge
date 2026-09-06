@@ -20,6 +20,43 @@ function serializeDoc(id: string, data: DocumentData) {
   return out
 }
 
+async function enrichRelationIds(tenantId: string, data: Record<string, unknown>) {
+  const next = { ...data }
+  const tenantRef = adminDb.collection('tenants').doc(tenantId)
+
+  if (typeof next.customerName === 'string' && next.customerName && !next.customerId) {
+    const customers = await tenantRef.collection('customers').where('name', '==', next.customerName).limit(1).get()
+
+    if (!customers.empty) next.customerId = customers.docs[0]!.id
+  }
+
+  if (typeof next.propertyName === 'string' && next.propertyName && !next.propertyId) {
+    const properties = await tenantRef.collection('properties').where('name', '==', next.propertyName).limit(1).get()
+
+    if (!properties.empty) {
+      const property = properties.docs[0]!
+
+      next.propertyId = property.id
+
+      if (!next.customerId && property.data().customerName) {
+        const customers = await tenantRef
+          .collection('customers')
+          .where('name', '==', String(property.data().customerName))
+          .limit(1)
+          .get()
+
+        if (!customers.empty) next.customerId = customers.docs[0]!.id
+      }
+
+      if (!next.customerName && property.data().customerName) {
+        next.customerName = String(property.data().customerName)
+      }
+    }
+  }
+
+  return next
+}
+
 export async function requireActiveTenantContext() {
   const user = await getSessionUser()
 
@@ -89,10 +126,11 @@ export async function createRecord(tenantId: string, collection: string, data: R
     throw Object.assign(new Error('Unknown collection'), { status: 400 })
   }
 
+  const enriched = await enrichRelationIds(tenantId, data)
   const ref = adminDb.collection('tenants').doc(tenantId).collection(collection).doc()
 
   await ref.set({
-    ...data,
+    ...enriched,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp()
   })
@@ -116,10 +154,11 @@ export async function updateRecord(
   }
 
   const { id: _id, createdAt: _c, ...rest } = data
+  const enriched = await enrichRelationIds(tenantId, rest)
 
   await ref.set(
     {
-      ...rest,
+      ...enriched,
       updatedAt: FieldValue.serverTimestamp()
     },
     { merge: true }

@@ -47,6 +47,8 @@ function mapJobStatus(status: string) {
       return 'Scheduled'
     case 'en_route':
       return 'Technician en route'
+    case 'weather_delay':
+      return 'Weather delay'
     case 'in_progress':
       return 'In Progress'
     case 'complete':
