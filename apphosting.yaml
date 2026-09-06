@@ -88,3 +88,24 @@ env:
   # - variable: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   #   secret: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   #   availability: [BUILD, RUNTIME]
+
+  # Optional portal OTP — create secrets then uncomment (see docs/customer-portal-production-readiness.md):
+  # - variable: RESEND_API_KEY
+  #   secret: RESEND_API_KEY
+  #   availability: [RUNTIME]
+  # - variable: PORTAL_OTP_FROM_EMAIL
+  #   value: portal@yourdomain.com
+  #   availability: [RUNTIME]
+  # - variable: TWILIO_ACCOUNT_SID
+  #   secret: TWILIO_ACCOUNT_SID
+  #   availability: [RUNTIME]
+  # - variable: TWILIO_AUTH_TOKEN
+  #   secret: TWILIO_AUTH_TOKEN
+  #   availability: [RUNTIME]
+  # - variable: TWILIO_FROM_NUMBER
+  #   value: "+1XXXXXXXXXX"
+  #   availability: [RUNTIME]
+  # Never enable in production unless you intentionally want codes in API responses:
+  # - variable: ALLOW_PORTAL_DEBUG_OTP
+  #   value: "false"
+  #   availability: [RUNTIME]

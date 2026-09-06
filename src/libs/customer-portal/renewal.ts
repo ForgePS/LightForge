@@ -12,6 +12,7 @@ import {
 } from '@libs/customer-portal/context'
 import type { PortalSessionContext } from '@libs/customer-portal/session'
 import { getPortalLighting } from '@libs/customer-portal/lighting'
+import { loadCustomerScopedDocs } from '@libs/customer-portal/customer-scope'
 import { requireAssuranceLevel } from '@libs/customer-portal/verification'
 
 export async function getPortalRenewal(session: PortalSessionContext) {
@@ -25,17 +26,12 @@ export async function getPortalRenewal(session: PortalSessionContext) {
   const year = new Date().getFullYear()
   const lighting = await getPortalLighting(session)
 
-  const existing = await adminDb
-    .collection('tenants')
-    .doc(ctx.tenantId)
-    .collection('rebookingRequests')
-    .where('customerName', '==', ctx.customerName)
-    .limit(10)
-    .get()
+  const existingRows = await loadCustomerScopedDocs(
+    adminDb.collection('tenants').doc(ctx.tenantId).collection('rebookingRequests'),
+    { customerId: ctx.customerId, customerName: ctx.customerName, limit: 10 }
+  )
 
-  const open = existing.docs
-    .map(doc => ({ id: doc.id, ...(doc.data() as DocumentData) }) as DocumentData & { id: string })
-    .find(row => ['new', 'contacted', 'pending'].includes(String(row.status || '')))
+  const open = existingRows.find(row => ['new', 'contacted', 'pending'].includes(String(row.status || '')))
 
   const priorJobs = await adminDb.collection('tenants').doc(ctx.tenantId).collection('jobs').limit(50).get()
   const priorInstall = priorJobs.docs
@@ -245,24 +241,17 @@ export async function listPortalProperties(session: PortalSessionContext) {
     }
   }
 
-  const snap = await adminDb
-    .collection('tenants')
-    .doc(ctx.tenantId)
-    .collection('properties')
-    .where('customerName', '==', ctx.customerName)
-    .limit(20)
-    .get()
+  const propertyRows = await loadCustomerScopedDocs(
+    adminDb.collection('tenants').doc(ctx.tenantId).collection('properties'),
+    { customerId: ctx.customerId, customerName: ctx.customerName, limit: 20 }
+  )
 
-  const properties = snap.docs.map(doc => {
-    const data = doc.data()
-
-    return {
-      id: doc.id,
-      name: String(data.name || 'Property'),
-      address: [data.address, data.city, data.state].filter(Boolean).join(', '),
-      selected: doc.id === ctx.propertyId
-    }
-  })
+  const properties = propertyRows.map(data => ({
+    id: String(data.id),
+    name: String(data.name || 'Property'),
+    address: [data.address, data.city, data.state].filter(Boolean).join(', '),
+    selected: String(data.id) === ctx.propertyId
+  }))
 
   return { properties, canSwitch: properties.length > 1 }
 }

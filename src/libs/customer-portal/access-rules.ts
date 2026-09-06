@@ -64,7 +64,10 @@ export function canAccessInvoiceRecord(input: {
 
   if (String(record.status || '') === 'draft') return false
 
-  if (record.customerId && String(record.customerId) === customerId) return true
+  if (record.customerId) {
+    return String(record.customerId) === customerId
+  }
+
   if (record.customerName && String(record.customerName) === customerName) return true
 
   const propertyName = record.propertyName

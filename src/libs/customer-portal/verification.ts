@@ -14,6 +14,11 @@ import {
 } from '@libs/customer-portal/session'
 import { generateSecureToken, hashToken, hashesEqual } from '@libs/customer-portal/tokens'
 import { effectiveAssuranceLevel } from '@libs/customer-portal/status-mappers'
+import {
+  assertPortalVerificationDeliveryAvailable,
+  deliverPortalVerificationCode,
+  shouldExposePortalDebugCode
+} from '@libs/customer-portal/notify'
 import type { AssuranceLevel } from '@libs/customer-portal/types'
 
 function maskDestination(value: string, channel: 'email' | 'sms') {
@@ -102,6 +107,9 @@ export async function sendPortalVerification(input: {
   }
 
   const code = generateNumericCode()
+  assertPortalVerificationDeliveryAvailable(channel)
+
+  const delivery = await deliverPortalVerificationCode({ channel, destination, code })
   const ref = adminDb.collection('tenants').doc(ctx.tenantId).collection('customerPortalVerifications').doc()
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
   const destinationMasked = maskDestination(destination, channel)
@@ -118,6 +126,8 @@ export async function sendPortalVerification(input: {
     expiresAt,
     verifiedAt: null,
     consumedAt: null,
+    deliveryProvider: delivery.provider,
+    deliveryMessageId: delivery.messageId || null,
     createdAt: FieldValue.serverTimestamp()
   })
 
@@ -129,11 +139,14 @@ export async function sendPortalVerification(input: {
       to: destination,
       channel,
       subject: 'Your portal verification code',
-      body: 'Your one-time verification code was requested for your customer portal. It expires in 10 minutes.',
-      status: 'sent',
+      body: delivery.delivered
+        ? 'Your one-time verification code was sent. It expires in 10 minutes.'
+        : `Your verification code is ${code}. It expires in 10 minutes.`,
+      status: delivery.delivered ? 'sent' : 'queued',
       source: 'customer_portal_verification',
       customerId: customerCtx.customerId,
       customerName: customerCtx.customerName,
+      provider: delivery.provider,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp()
     })
@@ -144,7 +157,14 @@ export async function sendPortalVerification(input: {
     customerId: customerCtx.customerId,
     action: 'portal.verification_sent',
     actor: { type: 'customer' },
-    metadata: { purpose: input.purpose, channel, destinationMasked, verificationId: ref.id }
+    metadata: {
+      purpose: input.purpose,
+      channel,
+      destinationMasked,
+      verificationId: ref.id,
+      provider: delivery.provider,
+      delivered: delivery.delivered
+    }
   })
 
   return {
@@ -152,7 +172,9 @@ export async function sendPortalVerification(input: {
     channel,
     destinationMasked,
     expiresAt,
-    debugCode: process.env.NODE_ENV === 'development' ? code : undefined
+    delivered: delivery.delivered,
+    provider: delivery.provider,
+    debugCode: shouldExposePortalDebugCode() ? code : undefined
   }
 }
 

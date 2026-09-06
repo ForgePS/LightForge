@@ -5,6 +5,7 @@ import type { DocumentData } from 'firebase-admin/firestore'
 import { adminDb } from '@libs/firebase/admin'
 import { getTenantPortalSettings } from '@libs/customer-portal/admin'
 import { getTenantBranding } from '@libs/branding/storage'
+import { loadCustomerScopedDocs } from '@libs/customer-portal/customer-scope'
 import type { CustomerPortalRecord, PortalHomeDto } from '@libs/customer-portal/types'
 import { derivePortalStatus, portalPrimaryAction } from '@libs/customer-portal/status-logic'
 
@@ -45,44 +46,59 @@ function seasonLabel(now = new Date()) {
 async function loadRelated(tenantId: string, customerName: string, customerId: string, propertyId: string | null) {
   const tenantRef = adminDb.collection('tenants').doc(tenantId)
 
-  const [proposalsSnap, jobsSnap, issuesSnap, invoicesSnap, rebookingSnap, propertiesSnap] = await Promise.all([
-    tenantRef.collection('proposals').where('customerName', '==', customerName).limit(20).get().catch(() => null),
+  const [proposals, invoices, rebooking, propertiesById, propertiesByName, jobsSnap, issuesSnap] = await Promise.all([
+    loadCustomerScopedDocs(tenantRef.collection('proposals'), { customerId, customerName, limit: 20 }),
+    loadCustomerScopedDocs(tenantRef.collection('invoices'), { customerId, customerName, limit: 20 }),
+    loadCustomerScopedDocs(tenantRef.collection('rebookingRequests'), { customerId, customerName, limit: 10 }),
+    tenantRef.collection('properties').where('customerId', '==', customerId).limit(20).get().catch(() => null),
+    customerName
+      ? tenantRef.collection('properties').where('customerName', '==', customerName).limit(20).get().catch(() => null)
+      : Promise.resolve(null),
     tenantRef.collection('jobs').limit(100).get(),
-    tenantRef.collection('serviceIssues').limit(100).get(),
-    tenantRef.collection('invoices').where('customerName', '==', customerName).limit(20).get().catch(() => null),
-    tenantRef.collection('rebookingRequests').where('customerName', '==', customerName).limit(10).get().catch(() => null),
-    tenantRef.collection('properties').where('customerName', '==', customerName).limit(20).get()
+    tenantRef.collection('serviceIssues').limit(100).get()
   ])
 
-  const properties = propertiesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }) as DocumentData & { id: string })
+  const propertiesMap = new Map<string, DocumentData & { id: string }>()
+
+  for (const doc of propertiesById?.docs || []) {
+    propertiesMap.set(doc.id, { id: doc.id, ...doc.data() })
+  }
+
+  for (const doc of propertiesByName?.docs || []) {
+    if (propertiesMap.has(doc.id)) continue
+    const data = doc.data()
+
+    if (data.customerId && String(data.customerId) !== customerId) continue
+    propertiesMap.set(doc.id, { id: doc.id, ...data })
+  }
+
+  const properties = [...propertiesMap.values()]
   const selected =
     (propertyId ? properties.find(p => p.id === propertyId) : null) || properties[0] || null
   const propertyNames = new Set(properties.map(p => String(p.name || '')))
 
   const jobs = jobsSnap.docs
-    .map(d => d.data())
-    .filter(
-      j =>
-        j.customerId === customerId ||
-        propertyNames.has(String(j.propertyName || '')) ||
-        String(j.customerName || '') === customerName
-    )
+    .map(d => ({ id: d.id, ...d.data() }) as DocumentData & { id: string })
+    .filter(j => {
+      if (j.customerId) return String(j.customerId) === customerId
+
+      return propertyNames.has(String(j.propertyName || '')) || String(j.customerName || '') === customerName
+    })
 
   const issues = issuesSnap.docs
-    .map(d => d.data())
-    .filter(
-      i =>
-        i.customerId === customerId ||
-        propertyNames.has(String(i.propertyName || '')) ||
-        String(i.customerName || '') === customerName
-    )
+    .map(d => ({ id: d.id, ...d.data() }) as DocumentData & { id: string })
+    .filter(i => {
+      if (i.customerId) return String(i.customerId) === customerId
+
+      return propertyNames.has(String(i.propertyName || '')) || String(i.customerName || '') === customerName
+    })
 
   return {
-    proposals: proposalsSnap ? proposalsSnap.docs.map(d => d.data()) : [],
+    proposals,
     jobs,
     issues,
-    invoices: invoicesSnap ? invoicesSnap.docs.map(d => d.data()) : [],
-    rebooking: rebookingSnap ? rebookingSnap.docs.map(d => d.data()) : [],
+    invoices,
+    rebooking,
     property: selected,
     properties
   }

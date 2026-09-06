@@ -122,6 +122,13 @@ describe('cross-customer invoice isolation', () => {
     expect(
       canAccessInvoiceRecord({
         ...anderson,
+        record: { number: 'INV-LEAK', customerId: 'cust_maple', customerName: 'Anderson Residence', status: 'sent' }
+      })
+    ).toBe(false)
+
+    expect(
+      canAccessInvoiceRecord({
+        ...anderson,
         record: { number: 'INV-2026-1108', customerName: 'Maple Grove HOA', status: 'sent' }
       })
     ).toBe(false)

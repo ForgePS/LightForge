@@ -47,21 +47,48 @@ export async function loadPortalCustomerContext(session: PortalSessionContext): 
     ? await tenantRef.collection('properties').doc(portal.primaryPropertyId).get()
     : null
 
+  if (!propertySnap?.exists) {
+    const byCustomerId = await tenantRef
+      .collection('properties')
+      .where('customerId', '==', portal.customerId)
+      .limit(1)
+      .get()
+
+    propertySnap = byCustomerId.empty ? null : byCustomerId.docs[0]!
+  }
+
   if (!propertySnap?.exists && customerName) {
     const byName = await tenantRef.collection('properties').where('customerName', '==', customerName).limit(1).get()
 
     propertySnap = byName.empty ? null : byName.docs[0]!
   }
 
-  const property = propertySnap?.exists ? propertySnap.data()! : null
-  const propertyId = propertySnap?.exists ? propertySnap.id : null
-  const propertyName = property ? String(property.name || '') : null
-
-  const allProps = customerName
+  const allPropsById = await tenantRef.collection('properties').where('customerId', '==', portal.customerId).limit(20).get()
+  const allPropsByName = customerName
     ? await tenantRef.collection('properties').where('customerName', '==', customerName).limit(20).get()
     : { docs: [] as Array<{ id: string; data: () => DocumentData }> }
 
-  const propertyNames = allProps.docs.map(doc => String(doc.data().name || '')).filter(Boolean)
+  const propertyMap = new Map<string, DocumentData>()
+
+  for (const doc of allPropsById.docs) propertyMap.set(doc.id, doc.data())
+  for (const doc of allPropsByName.docs) {
+    if (propertyMap.has(doc.id)) continue
+    const data = doc.data()
+
+    if (data.customerId && String(data.customerId) !== portal.customerId) continue
+    propertyMap.set(doc.id, data)
+  }
+
+  if (!propertySnap?.exists && propertyMap.size > 0) {
+    const firstId = [...propertyMap.keys()][0]!
+
+    propertySnap = await tenantRef.collection('properties').doc(firstId).get()
+  }
+
+  const property = propertySnap?.exists ? propertySnap.data()! : null
+  const propertyId = propertySnap?.exists ? propertySnap.id : null
+  const propertyName = property ? String(property.name || '') : null
+  const propertyNames = [...propertyMap.values()].map(data => String(data.name || '')).filter(Boolean)
 
   if (propertyName && !propertyNames.includes(propertyName)) {
     propertyNames.push(propertyName)
